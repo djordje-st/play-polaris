@@ -1,0 +1,71 @@
+{
+  "name": "playground",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.34.1",
+  "engines": {
+    "node": "^24.0.0"
+  },
+  "scripts": {
+    "dev": "vite dev --port 3000",
+    "generate-routes": "tsr generate",
+    "build": "vite build",
+    "start": "node .output/server/index.mjs",
+    "preview": "vite preview",
+    "lint": "eslint",
+    "format": "eslint --fix && prettier --write .",
+    "check": "prettier --check . && eslint",
+    "typecheck": "tsc --noEmit",
+    "deploy": "pnpm run build && wrangler deploy",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@cloudflare/vite-plugin": "^1.26.0",
+    "@dnd-kit/dom": "0.5.0",
+    "@dnd-kit/solid": "0.5.0",
+    "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/solid-router": "1.170.38",
+    "@tanstack/solid-start": "1.168.57",
+    "@tanstack/solid-store": "0.11.2",
+    "@zumer/snapdom": "3.2.0",
+    "driver.js": "1.9.0",
+    "fflate": "^0.8.3",
+    "solid-js": "^1.9.12",
+    "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@tanstack/devtools-vite": "0.8.5",
+    "@tanstack/eslint-config": "0.4.0",
+    "@tanstack/intent": "^0.5.2",
+    "@tanstack/router-cli": "^1.133.21",
+    "@types/node": "^24.19.1",
+    "@vitest/coverage-v8": "5.0.3",
+    "eslint": "^9.20.0",
+    "fake-indexeddb": "^6.2.5",
+    "happy-dom": "^20.14.5",
+    "polaris-types-v1": "npm:@shopify/polaris-types@1.1.0",
+    "polaris-types-v2": "npm:@shopify/polaris-types@2.0.0-rc.1",
+    "prettier": "^3.8.1",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.0",
+    "vite-plugin-solid": "^2.11.12",
+    "vitest": "^5.0.3",
+    "wrangler": "^4.70.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "lightningcss",
+      "sharp",
+      "workerd"
+    ]
+  },
+  "intent": {
+    "skills": [
+      "*"
+    ]
+  }
+}

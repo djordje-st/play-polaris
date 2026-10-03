@@ -1,0 +1,282 @@
+@import 'tailwindcss';
+
+/*
+ * Fonts: SIL Open Font License; see assets/fonts.
+ * `optional` avoids reflow when a font misses first paint.
+ */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: optional;
+  src: url('./assets/fonts/inter-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: optional;
+  src: url('./assets/fonts/inter-latin-ext.woff2') format('woff2');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: optional;
+  src: url('./assets/fonts/jetbrains-mono-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212,
+    U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: optional;
+  src: url('./assets/fonts/jetbrains-mono-latin-ext.woff2') format('woff2');
+  unicode-range:
+    U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304,
+    U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB,
+    U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --text-xs: 11px;
+  --text-xs--line-height: 16px;
+  --text-sm: 12px;
+  --text-sm--line-height: 16px;
+  --text-base: 13px;
+  --text-base--line-height: 20px;
+
+  --color-ink: #1d2129;
+  --color-ink-2: #4c5361;
+  --color-ink-3: #868c98;
+  --color-line: #e4e6ea;
+  --color-line-strong: #cfd3da;
+  --color-panel: #ffffff;
+  --color-chrome: #f6f7f9;
+  --color-hover: #eef0f3;
+  --color-well: #e9ebef;
+  --color-dot: #c9cdd5;
+  --color-accent: #2f5bff;
+  --color-accent-strong: #2448d8;
+  --color-accent-soft: #eaefff;
+  --color-danger: #d23b40;
+  --color-danger-soft: #fdeeee;
+  --color-warn: #b86e00;
+  --color-warn-soft: #fff5e5;
+  --color-ok: #1f8a4c;
+  --color-raised: #ffffff;
+  --color-on-accent: #ffffff;
+
+  --color-syntax-tag: #2448d8;
+  --color-syntax-attr: #8a3ab9;
+  --color-syntax-value: #1d7a4a;
+  --color-syntax-keyword: #b4235c;
+
+  --animate-fade-in: fade-in 150ms ease-out;
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+}
+
+/* Swap tokens so every utility follows the theme without dark: variants. */
+html.dark {
+  color-scheme: dark;
+  --color-ink: #e8eaef;
+  --color-ink-2: #aab0bc;
+  --color-ink-3: #767d8b;
+  --color-line: #292d35;
+  --color-line-strong: #3a3f4a;
+  --color-panel: #17191e;
+  --color-chrome: #111317;
+  --color-hover: #23262d;
+  --color-well: #0c0d10;
+  --color-dot: #262a32;
+  --color-accent: #6b8cff;
+  --color-accent-strong: #8aa3ff;
+  --color-accent-soft: #1d2645;
+  --color-danger: #f26b6f;
+  --color-danger-soft: #3a1d20;
+  --color-warn: #e3a447;
+  --color-warn-soft: #33270f;
+  --color-ok: #4fc283;
+  --color-raised: #2a2e37;
+  --color-on-accent: #0b0e18;
+
+  --color-syntax-tag: #8ea8ff;
+  --color-syntax-attr: #d3a0ff;
+  --color-syntax-value: #7fd6a4;
+  --color-syntax-keyword: #ff7fab;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
+  color: var(--color-ink);
+  background: var(--color-chrome);
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* In the base layer so utilities like outline-none can override it. */
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+  }
+}
+
+.drafting {
+  background-color: var(--color-well);
+  background-image: radial-gradient(var(--color-dot) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+}
+
+html.dragging [data-insert-zone] {
+  display: none;
+}
+
+.driver-popover.pg-tour {
+  min-width: 288px;
+  max-width: 320px;
+  padding: 16px;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  color: var(--color-ink);
+  background: var(--color-panel);
+  box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.35);
+  font-family: var(--font-sans);
+}
+.pg-tour .driver-popover-title {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 22px;
+}
+.pg-tour .driver-popover-description {
+  margin-top: 4px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--color-ink-2);
+}
+.pg-tour .driver-popover-close-btn {
+  color: var(--color-ink-3);
+}
+.pg-tour .driver-popover-close-btn:hover,
+.pg-tour .driver-popover-close-btn:focus-visible {
+  color: var(--color-ink);
+}
+.pg-tour .driver-popover-footer {
+  margin-top: 16px;
+}
+.pg-tour .driver-popover-progress-text {
+  font-size: 12px;
+  color: var(--color-ink-3);
+}
+.pg-tour .driver-popover-footer-btn {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--color-line-strong);
+  border-radius: 6px;
+  font: 500 12px/26px var(--font-sans);
+  text-shadow: none;
+  color: var(--color-ink);
+  background: var(--color-raised);
+}
+.pg-tour .driver-popover-footer-btn:hover {
+  background: var(--color-hover);
+}
+.pg-tour .driver-popover-footer-btn:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+.pg-tour .driver-popover-next-btn {
+  border-color: var(--color-accent);
+  color: var(--color-on-accent);
+  background: var(--color-accent);
+}
+.pg-tour .driver-popover-next-btn:hover {
+  background: var(--color-accent-strong);
+}
+.driver-popover.pg-tour-narrow {
+  min-width: 0;
+  max-width: 284px;
+}
+.pg-tour .driver-popover-arrow-side-left {
+  border-left-color: var(--color-panel);
+}
+.pg-tour .driver-popover-arrow-side-right {
+  border-right-color: var(--color-panel);
+}
+.pg-tour .driver-popover-arrow-side-top {
+  border-top-color: var(--color-panel);
+}
+.pg-tour .driver-popover-arrow-side-bottom {
+  border-bottom-color: var(--color-panel);
+}
+
+dialog.sheet {
+  /* Preflight zeroes margins; auto is what centers a modal dialog. */
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--color-line);
+  border-radius: 12px;
+  color: inherit;
+  background: var(--color-panel);
+  box-shadow: 0 24px 64px -12px rgb(16 24 40 / 0.28);
+}
+
+dialog.sheet::backdrop {
+  background: rgb(10 12 16 / 0.4);
+}
+
+[popover].menu {
+  margin: 0;
+  padding: 4px;
+  min-width: 168px;
+  border: 1px solid var(--color-line);
+  border-radius: 8px;
+  color: inherit;
+  background: var(--color-panel);
+  box-shadow: 0 8px 28px -6px rgb(0 0 0 / 0.24);
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line-strong) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
