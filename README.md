@@ -6,6 +6,8 @@ Prototype Shopify App Home screens with [Polaris web components](https://shopify
 
 This is an independent project, not made or endorsed by Shopify.
 
+![PlayPolaris builder in dark mode](public/builder-screenshot-dark.webp)
+
 ## Features
 
 - **Live preview with the real runtime.** The canvas is an iframe that loads Shopify's own `polaris-1.js` (v1) or `polaris-2.0-rc.js` (v2 release candidate, the new admin design). Switch versions at any time to compare them.
