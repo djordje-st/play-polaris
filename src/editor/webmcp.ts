@@ -122,7 +122,7 @@ const TOOLS: Array<
     name: 'get_workspace',
     title: 'Get workspace',
     description:
-      'Overview of the Polaris playground: the Polaris web components version being previewed, every page with its id, the open page and the selected component. Start here.',
+      'Overview of PlayPolaris: the Polaris web components version being previewed, every page with its id, the open page and the selected component. Start here.',
     inputSchema: { type: 'object', properties: {} },
     annotations: { readOnlyHint: true },
     run: () => {

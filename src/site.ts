@@ -1,21 +1,16 @@
-import { createIsomorphicFn } from '@tanstack/solid-start'
-import { getRequest } from '@tanstack/solid-start/server'
 import type { IconName } from './components/ui'
 
 export const SITE = {
-  name: 'Polaris Playground',
-  title: 'Polaris Playground: Shopify Polaris web components builder',
+  name: 'PlayPolaris',
+  url: 'https://playpolaris.dev',
+  repository: 'https://github.com/djordje-st/play-polaris',
+  title: 'PlayPolaris: Shopify Polaris web components builder',
   description:
-    'Prototype Shopify App Home screens with real Polaris web components. Drag and drop, check nesting rules, and export HTML or React JSX. Free, no account.',
+    'Free, open-source Shopify Polaris web components builder. Prototype App Home screens, check nesting rules, and export HTML or React JSX. No account needed.',
   summary:
-    'A free, browser-based builder for prototyping Shopify App Home screens with Polaris web components, with live validation and HTML or React export.',
+    'A free, open-source, browser-based builder for prototyping Shopify App Home screens with Polaris web components, with live validation and HTML or React export.',
   updated: '2026-10-03',
 } as const
-
-// Use the request origin so canonical URLs work on custom domains.
-export const getOrigin = createIsomorphicFn()
-  .server(() => new URL(getRequest().url).origin)
-  .client(() => window.location.origin)
 
 export const FEATURES: Array<{ icon: IconName; title: string; body: string }> =
   [
@@ -68,12 +63,16 @@ export const STEPS: Array<{ title: string; body: string }> = [
 
 export const FAQ: Array<{ q: string; a: string }> = [
   {
-    q: 'What is Polaris Playground?',
-    a: 'Polaris Playground is a free, browser-based builder for prototyping Shopify App Home screens with Polaris web components. You arrange real components in a live preview, it checks Polaris nesting rules as you go, and you export the result as HTML or React JSX.',
+    q: 'What is PlayPolaris?',
+    a: 'PlayPolaris is a free, browser-based builder for prototyping Shopify App Home screens with Polaris web components. You arrange real components in a live preview, it checks Polaris nesting rules as you go, and you export the result as HTML or React JSX.',
   },
   {
     q: 'Is it free, and do I need an account?',
     a: "It's free, and there's no account or sign-up. Open the builder and start; your work is saved in your browser as you go.",
+  },
+  {
+    q: 'Is PlayPolaris open source?',
+    a: 'Yes. PlayPolaris is released under the MIT License. You can read the source code, report issues, and contribute on GitHub.',
   },
   {
     q: 'Which Polaris versions does it support?',
@@ -97,6 +96,6 @@ export const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: 'Is this an official Shopify product?',
-    a: "No. Polaris Playground is an independent tool. It loads Polaris from Shopify's CDN and follows Shopify's public documentation, but it isn't made or endorsed by Shopify.",
+    a: "No. PlayPolaris is an independent tool. It loads Polaris from Shopify's CDN and follows Shopify's public documentation, but it isn't made or endorsed by Shopify.",
   },
 ]

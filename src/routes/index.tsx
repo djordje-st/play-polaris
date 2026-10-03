@@ -1,15 +1,13 @@
 import { createFileRoute } from '@tanstack/solid-router'
 import { Home } from '../components/Home'
-import { FAQ, FEATURES, SITE, getOrigin } from '../site'
+import { FAQ, FEATURES, SITE } from '../site'
 
 export const Route = createFileRoute('/')({
-  loader: () => ({ origin: getOrigin() }),
-  head: ({ loaderData }) => {
-    const origin = loaderData?.origin ?? ''
-    const url = `${origin}/`
-    const image = `${origin}/og.png`
+  head: () => {
+    const url = `${SITE.url}/`
+    const image = `${SITE.url}/og.png`
     const imageAlt =
-      'Polaris Playground: layers, a live Polaris preview and the inspector'
+      'PlayPolaris: layers, a live Polaris preview and the inspector'
 
     const graph = {
       '@context': 'https://schema.org',
@@ -26,8 +24,10 @@ export const Route = createFileRoute('/')({
           '@type': 'WebApplication',
           '@id': `${url}#app`,
           name: SITE.name,
-          url: `${origin}/builder`,
+          url: `${SITE.url}/builder`,
           description: SITE.summary,
+          sameAs: SITE.repository,
+          license: `${SITE.repository}/blob/main/LICENSE`,
           applicationCategory: 'DeveloperApplication',
           operatingSystem: 'Any',
           browserRequirements: 'Requires JavaScript and a modern web browser',

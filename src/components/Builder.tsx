@@ -162,7 +162,7 @@ function Workbench(props: { loadingVersion: boolean }) {
 
         <div class="fixed inset-0 z-90 hidden place-items-center bg-chrome p-8 text-center max-[899px]:grid">
           <div class="max-w-xs">
-            <p class="font-semibold">Polaris Playground needs a wider window</p>
+            <p class="font-semibold">PlayPolaris needs a wider window</p>
 
             <p class="mt-1 text-sm text-ink-2">
               The builder shows layers, a live preview and an inspector side by

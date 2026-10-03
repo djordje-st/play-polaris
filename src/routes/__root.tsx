@@ -17,7 +17,7 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Polaris Playground' },
+      { title: 'PlayPolaris' },
       { name: 'color-scheme', content: 'light dark' },
     ],
     links: [
@@ -80,6 +80,12 @@ function RootComponent() {
         <HydrationScript />
 
         <ScriptOnce children={THEME_SCRIPT} />
+
+        <script
+          defer
+          src="https://umami-production-5cba.up.railway.app/script.js"
+          data-website-id="4a2e8287-6a27-45f5-9e92-c6abbfabe333"
+        />
       </head>
 
       <body>

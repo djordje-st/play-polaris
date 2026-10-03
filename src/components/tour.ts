@@ -5,7 +5,7 @@ const SEEN = 'polaris-playground:tour-seen'
 const STEPS: Array<DriveStep> = [
   {
     popover: {
-      title: 'Welcome to Polaris Playground',
+      title: 'Welcome to PlayPolaris',
       description:
         "Sketch Shopify App Home screens with the real Polaris web components, then take the code with you. Here's a quick look around.",
       showButtons: ['next', 'close'],

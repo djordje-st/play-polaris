@@ -1,4 +1,6 @@
-# Polaris Playground
+# PlayPolaris
+
+[Open the builder](https://playpolaris.dev/builder) · [Website](https://playpolaris.dev)
 
 Prototype Shopify App Home screens with [Polaris web components](https://shopify.dev/docs/api/app-home/web-components), check them against Polaris's nesting and slot rules, and export HTML or React JSX. The editor runs in the browser. Pages are saved to IndexedDB, with no accounts or backend for saved work.
 
@@ -58,7 +60,11 @@ Only one tab edits at a time, so two tabs can't overwrite each other. The editin
 
 ### Homepage and search
 
-`/` is server-rendered: a product page with an FAQ, canonical and Open Graph tags, and one JSON-LD graph (`WebSite`, `WebApplication`, `FAQPage`). `/builder` renders on the client only and is `noindex`, since its server HTML is an empty shell. `/robots.txt` (with explicit allows for AI crawlers), `/sitemap.xml` and [`/llms.txt`](https://llmstxt.org) are server routes built from `src/site.ts`, with URLs taken from the request so they're right on any domain. The builder's code isn't loaded on the homepage. Inter and JetBrains Mono are self-hosted (`src/assets/fonts`, SIL Open Font License), so first paint doesn't wait on a third-party stylesheet.
+`/` is server-rendered: a product page with an FAQ, canonical and Open Graph tags, and one JSON-LD graph (`WebSite`, `WebApplication`, `FAQPage`). `/builder` renders on the client only and is `noindex`, since its server HTML is an empty shell. `/robots.txt` (with explicit allows for AI crawlers), `/sitemap.xml` and [`/llms.txt`](https://playpolaris.dev/llms.txt) are server routes built from `src/site.ts`. All discovery URLs use `https://playpolaris.dev`, including when served from a preview or alternate host. Structured data and `llms.txt` also link to the source repository and MIT License.
+
+For a separately hosted fork, update `SITE.url` and `SITE.repository` in `src/site.ts`, plus the links in `package.json` and this README. Local development works without changes; navigation and app assets use relative URLs.
+
+The builder's code isn't loaded on the homepage. Inter and JetBrains Mono are self-hosted (`src/assets/fonts`, SIL Open Font License), so first paint doesn't wait on a third-party stylesheet.
 
 ### WebMCP
 

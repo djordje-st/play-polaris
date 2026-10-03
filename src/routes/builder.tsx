@@ -10,7 +10,7 @@ export const Route = createFileRoute('/builder')({
   ssr: false,
   head: () => ({
     meta: [
-      { title: 'Builder · Polaris Playground' },
+      { title: 'Builder · PlayPolaris' },
       {
         name: 'description',
         content:

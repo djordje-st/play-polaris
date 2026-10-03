@@ -91,8 +91,8 @@ export function Home() {
 
           <p class="mt-6 max-w-xl text-[17px] leading-7 text-ink-2">
             Drag Polaris web components into a live preview, let the builder
-            check them against Polaris rules, and export HTML or React. Free, in
-            your browser, with no account.
+            check them against Polaris rules, and export HTML or React. Free and
+            open source, in your browser, with no account.
           </p>
 
           <div class="mt-8 flex flex-wrap gap-3">
@@ -281,6 +281,13 @@ export function Home() {
             >
               Builder
             </Link>
+
+            <a
+              href={SITE.repository}
+              class="hover:text-ink"
+            >
+              GitHub
+            </a>
 
             <a
               href="https://shopify.dev/docs/api/app-home/web-components"

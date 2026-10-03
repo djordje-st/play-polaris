@@ -4,8 +4,7 @@ import { FAQ, FEATURES, SITE, STEPS } from '../site'
 export const Route = createFileRoute('/llms.txt')({
   server: {
     handlers: {
-      GET: ({ request }) => {
-        const origin = new URL(request.url).origin
+      GET: () => {
         const body = `# ${SITE.name}
 
 > ${SITE.summary}
@@ -14,8 +13,10 @@ ${SITE.name} runs in the browser. It loads Shopify's Polaris web components from
 
 ## Pages
 
-- [Home](${origin}/): What ${SITE.name} does, how it works, and answers to common questions.
-- [Builder](${origin}/builder): The app itself. Layers and components on the left, a live Polaris preview in the middle, properties on the right.
+- [Home](${SITE.url}/): The official website for ${SITE.name}, with features, workflow, and answers to common questions.
+- [Builder](${SITE.url}/builder): The app itself. Layers and components on the left, a live Polaris preview in the middle, properties on the right.
+- [Source code](${SITE.repository}): The open-source repository, issue tracker, and contribution guide.
+- [License](${SITE.repository}/blob/main/LICENSE): MIT License.
 
 ## Features
 

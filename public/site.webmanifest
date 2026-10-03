@@ -1,6 +1,6 @@
 {
-  "name": "Polaris Playground",
-  "short_name": "Polaris Playground",
+  "name": "PlayPolaris",
+  "short_name": "PlayPolaris",
   "description": "Prototype Shopify App Home screens with real Polaris web components and export HTML or React JSX.",
   "start_url": "/builder",
   "display": "standalone",

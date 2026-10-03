@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a reproducible problem with Polaris Playground.
+about: Report a reproducible problem with PlayPolaris.
 ---
 
 <!-- Search existing issues first. Remove private data from examples and screenshots. Do not report security vulnerabilities in a public issue. -->

@@ -4,18 +4,13 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { RouterProvider, createMemoryHistory } from '@tanstack/solid-router'
 import { mount, button } from './test/dom'
 import { getRouter } from './router'
-import { FAQ, FEATURES, SITE, getOrigin } from './site'
+import { FAQ, FEATURES, SITE } from './site'
 import { Route as robots } from './routes/robots[.]txt'
 import { Route as sitemap } from './routes/sitemap[.]xml'
 import { Route as llms } from './routes/llms[.]txt'
 import { Route as builder } from './routes/builder'
 import { Route as documentRoute } from './routes/__root'
 import type { ParentProps } from 'solid-js'
-
-// Vitest omits Start's request context; loaders and handlers still use their real implementations.
-vi.mock('@tanstack/solid-start/server', () => ({
-  getRequest: () => new Request('https://custom.example/path?query=1'),
-}))
 
 const shell = Reflect.get(documentRoute.options, 'shellComponent')
 
@@ -32,7 +27,7 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-test('homepage routing renders content, navigation and origin-specific metadata', async () => {
+test('homepage renders content, navigation and canonical production metadata', async () => {
   const router = getRouter()
 
   router.update({ history: createMemoryHistory({ initialEntries: ['/'] }) })
@@ -43,7 +38,6 @@ test('homepage routing renders content, navigation and origin-specific metadata'
   await vi.waitFor(() =>
     expect(root.querySelector('h1')?.textContent).toContain('Prototype Shopify')
   )
-  expect(getOrigin()).toBe('https://custom.example')
   expect(router.options.scrollRestoration).toBe(true)
   expect(router.options.defaultPreload).toBe('intent')
 
@@ -57,6 +51,7 @@ test('homepage routing renders content, navigation and origin-specific metadata'
 
   expect(root.querySelector('a[href="/builder"]')).not.toBeNull()
   expect(root.querySelector('a[href="#main"]')).not.toBeNull()
+  expect(root.querySelector(`a[href="${SITE.repository}"]`)).not.toBeNull()
 
   const screenshot = root.querySelector<HTMLImageElement>('main img')!
 
@@ -68,11 +63,17 @@ test('homepage routing renders content, navigation and origin-specific metadata'
 
   const index = router.state.matches.find(match => match.routeId === '/')!
 
-  expect(index.loaderData).toEqual({ origin: 'https://custom.example' })
   expect(index.links).toContainEqual({
     rel: 'canonical',
-    href: 'https://custom.example/',
+    href: 'https://playpolaris.dev/',
   })
+  expect(index.meta).toEqual(
+    expect.arrayContaining([
+      { property: 'og:url', content: 'https://playpolaris.dev/' },
+      { property: 'og:image', content: 'https://playpolaris.dev/og.png' },
+      { name: 'twitter:image', content: 'https://playpolaris.dev/og.png' },
+    ])
+  )
 
   const script = index.headScripts?.find(
     entry => entry?.type === 'application/ld+json'
@@ -82,6 +83,17 @@ test('homepage routing renders content, navigation and origin-specific metadata'
   expect(
     graph['@graph'].map((entry: { '@type': string }) => entry['@type'])
   ).toEqual(['WebSite', 'WebApplication', 'FAQPage'])
+  expect(graph['@graph'][0]).toMatchObject({
+    '@id': 'https://playpolaris.dev/#website',
+    url: 'https://playpolaris.dev/',
+  })
+  expect(graph['@graph'][1]).toMatchObject({
+    '@id': 'https://playpolaris.dev/#app',
+    url: 'https://playpolaris.dev/builder',
+    sameAs: SITE.repository,
+    license: `${SITE.repository}/blob/main/LICENSE`,
+  })
+  expect(graph['@graph'][2]['@id']).toBe('https://playpolaris.dev/#faq')
   expect(graph['@graph'][2].mainEntity).toHaveLength(FAQ.length)
   expect(router.state.matches[0]!.links).toContainEqual(
     expect.objectContaining({ rel: 'manifest', href: '/site.webmanifest' })
@@ -153,7 +165,7 @@ test.each([
   ['/sitemap.xml', sitemap, 'application/xml'],
   ['/llms.txt', llms, 'text/markdown'],
 ] as const)(
-  '%s responds with correct content, caching and custom-domain links',
+  '%s responds with production URLs even on an alternate host',
   async (path, route, type) => {
     const handlers = route.options.server!.handlers!
 
@@ -171,20 +183,25 @@ test.each([
 
     const body = await response.text()
 
+    expect(body).not.toContain('custom.example')
+
     if (path === '/robots.txt') {
       expect(body).toContain('User-agent: GPTBot\nAllow: /')
-      expect(body).toContain('Sitemap: https://custom.example/sitemap.xml')
+      expect(body).toContain('Sitemap: https://playpolaris.dev/sitemap.xml')
     } else if (path === '/sitemap.xml') {
       const xml = new DOMParser().parseFromString(body, 'application/xml')
 
       expect(xml.querySelector('parsererror')).toBeNull()
       expect(xml.querySelector('loc')?.textContent).toBe(
-        'https://custom.example/'
+        'https://playpolaris.dev/'
       )
       expect(xml.querySelector('lastmod')?.textContent).toBe(SITE.updated)
       expect(body).not.toContain('/builder')
     } else {
-      expect(body).toContain('[Builder](https://custom.example/builder)')
+      expect(body).toContain('[Home](https://playpolaris.dev/)')
+      expect(body).toContain('[Builder](https://playpolaris.dev/builder)')
+      expect(body).toContain(`[Source code](${SITE.repository})`)
+      expect(body).toContain(`[License](${SITE.repository}/blob/main/LICENSE)`)
 
       for (const item of FAQ) {
         expect(body).toContain(item.a)

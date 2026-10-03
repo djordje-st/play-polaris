@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/solid-router'
+import { SITE } from '../site'
 
 const AI_CRAWLERS = [
   'GPTBot',
@@ -15,14 +16,13 @@ const AI_CRAWLERS = [
 export const Route = createFileRoute('/robots.txt')({
   server: {
     handlers: {
-      GET: ({ request }) => {
-        const origin = new URL(request.url).origin
+      GET: () => {
         const body = [
           'User-agent: *',
           'Allow: /',
           '',
           ...AI_CRAWLERS.flatMap(bot => [`User-agent: ${bot}`, 'Allow: /', '']),
-          `Sitemap: ${origin}/sitemap.xml`,
+          `Sitemap: ${SITE.url}/sitemap.xml`,
           '',
         ].join('\n')
 

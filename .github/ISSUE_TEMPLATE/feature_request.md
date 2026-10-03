@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an improvement to Polaris Playground.
+about: Suggest an improvement to PlayPolaris.
 ---
 
 ## Problem

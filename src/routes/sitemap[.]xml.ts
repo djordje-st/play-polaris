@@ -5,12 +5,11 @@ import { SITE } from '../site'
 export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
-      GET: ({ request }) => {
-        const origin = new URL(request.url).origin
+      GET: () => {
         const body = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>${origin}/</loc>
+    <loc>${SITE.url}/</loc>
     <lastmod>${SITE.updated}</lastmod>
   </url>
 </urlset>

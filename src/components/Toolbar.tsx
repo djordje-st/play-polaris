@@ -59,7 +59,7 @@ export function Toolbar(props: {
       <div class="flex items-center gap-2 pr-1">
         <Logo />
 
-        <span class="font-semibold whitespace-nowrap">Polaris Playground</span>
+        <span class="font-semibold whitespace-nowrap">PlayPolaris</span>
       </div>
 
       <div data-tour="version">
