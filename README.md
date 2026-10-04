@@ -20,6 +20,7 @@ This is an independent project, not made or endorsed by Shopify.
 - **Export.** HTML (a fragment, or a full document with the Polaris and optional App Bridge script tags) or React JSX/TSX, for one page or all pages (zip).
 - **Import.** Paste HTML, or JSX copied from Shopify's docs. Event handlers, scripts and non-Polaris tags are removed.
 - **Editing.** Hover any element in the preview or any row in the tree to duplicate or delete it. Undo/redo (typing in a field merges into one step), copy/cut/paste nodes as HTML through the system clipboard, keyboard navigation of the tree, and an interact mode for using the components.
+- **Collaborative editing.** Choose **Share → Start shared session** to create a separate shared copy of your pages. Send the room link to edit together. Each browser saves its copy locally, and undo affects that browser's edits. Your personal workspace stays separate.
 - **A short tour** for first-time visitors (built on [driver.js](https://driverjs.com), loaded only when it runs). Replay it any time from the Help menu.
 - **Light and dark themes** for the builder, following the system by default. The Polaris preview stays in the admin's light theme.
 - **Two tabs, one editor.** Open the builder in a second tab and it shows the workspace view-only, mirroring edits live. "Edit here instead" moves editing over after the other tab saves, and closing the editing tab hands editing to a waiting one.
@@ -56,9 +57,19 @@ Bug reports, documentation fixes, and focused pull requests are welcome. See [CO
 
 The workspace lives in IndexedDB: one row per page and per saved component, plus a settings row that keeps the page order. Saves are debounced and write only the rows whose objects changed, which the immutable editor makes an identity check. A workspace saved by the first release (one big record) is moved over once on load.
 
-Use **Clear local data** (the trash icon in the toolbar) to delete all pages, saved components, and workspace settings and start with a blank page. This also clears undo history and updates other open tabs. Export any work you want to keep before confirming.
+Use **Clear local data** (the trash icon in the personal workspace toolbar) to delete its pages, saved components, and workspace settings and start with a blank page. This also clears undo history and updates other personal-workspace tabs. It does not remove cached shared rooms. Export any work you want to keep before confirming.
 
 Only one tab edits at a time, so two tabs can't overwrite each other. The editing tab holds a [Web Lock](https://developer.mozilla.org/docs/Web/API/Web_Locks_API). Other tabs are view-only: the editing tab announces each save over a `BroadcastChannel`, and they show what it stored. They also queue for the lock, so closing the editing tab promotes the next one. "Edit here instead" asks the editing tab to save over the same channel, then takes the lock with `steal`. Browsers without Web Locks just edit.
+
+### Shared rooms
+
+Shared rooms allow simultaneous editing across browsers and tabs. **Share → Copy link** gives anyone with the link editing access. **Leave room** returns to your personal workspace; keep the link to reopen the room's saved local copy. Selection, active page, viewport and saved components stay local to each browser.
+
+[Yjs](https://github.com/yjs/yjs) merges node properties and text. Moves keep node identities; conflicting moves resolve deterministically, and components with broken parent links are recovered at the first page's root. The existing validator reports nesting and slot conflicts. Undo tracks only this browser's user and agent edits.
+
+The Cloudflare Durable Object forwards WebSocket messages and uses hibernation. It never writes documents to server storage. A newcomer must wait for a participant with a saved copy to connect; existing participants can reopen their cached copy and edit during a disconnection. Reconnecting exchanges missing updates. Clearing site data removes that browser's saved rooms, so export important work.
+
+Rooms are limited to 16 connected browsers and 1 MB per synchronization message. The SQLite-backed class in `wrangler.jsonc` works on the Workers Free plan without using its document storage. `pnpm dev` runs the room locally without a Cloudflare account; deploying the existing Worker also deploys the room binding and class migration.
 
 ### Homepage and search
 

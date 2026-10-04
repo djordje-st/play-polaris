@@ -20,7 +20,7 @@ export type Page = { id: string; name: string; nodes: Array<TreeNode> }
 
 export type Doc = { version: Version; pages: Array<Page> }
 
-export const uid = () => Math.random().toString(36).slice(2, 8)
+export const uid = () => crypto.randomUUID()
 
 export const isText = (n: TreeNode): n is TextNode => n.tag === '#text'
 
@@ -215,7 +215,10 @@ export function cloneFresh(
     const id = !isText(n) && n.attrs.id
 
     if (typeof id === 'string' && taken.has(id)) {
-      renames.set(id, `${id.replace(/-[a-z0-9]{6}$/, '')}-${uid()}`)
+      renames.set(
+        id,
+        `${id.replace(/-(?:[a-z0-9]{6}|[a-f0-9]{12})$/, '')}-${uid().replaceAll('-', '').slice(0, 12)}`
+      )
     }
   })
 

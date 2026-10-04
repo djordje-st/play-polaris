@@ -17,6 +17,7 @@ export const Route = createFileRoute('/builder')({
           'Build Shopify App Home screens with Polaris web components, then export HTML or React JSX.',
       },
       { name: 'robots', content: 'noindex, follow' },
+      { name: 'referrer', content: 'no-referrer' },
     ],
     // Preload the default v1 assets to avoid waiting on JavaScript and IndexedDB.
     // Low priority leaves bandwidth for the app bundle.

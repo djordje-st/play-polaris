@@ -80,7 +80,7 @@ export const FAQ: Array<{ q: string; a: string }> = [
   },
   {
     q: 'Where is my work stored?',
-    a: "In your browser's IndexedDB storage. Nothing is uploaded. Clearing this site's data removes it, so export pages you want to keep.",
+    a: "In your browser's IndexedDB storage. Shared sessions relay edits to other people in the room without keeping a server copy. Clearing this site's data removes your local copies, so export pages you want to keep.",
   },
   {
     q: 'Can I use the exported code in my Shopify app?',

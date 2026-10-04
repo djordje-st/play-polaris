@@ -15,7 +15,10 @@ import {
   loadCatalog,
   setCatalog,
   setSaveState,
+  refreshShared,
+  notify,
 } from '../editor/store'
+import { joinRoom, roomId } from '../editor/collaboration'
 import { loadWorkspace, startSession, takeOver } from '../editor/persistence'
 import { handleShortcut, installClipboard } from '../editor/shortcuts'
 import {
@@ -38,9 +41,19 @@ import { Button, Icon } from './ui'
 export function Builder() {
   onMount(initTheme)
 
+  const id = roomId()
+  const room = id ? joinRoom(id) : null
+  const roomState = useSelector(editor, s => s.room)
+
+  onCleanup(() => {
+    void room?.close()
+  })
+
   const ready = useSelector(editor, s => s.ready)
   const docVersion = useSelector(editor, s => s.doc.version)
-  const [workspace] = createResource(loadWorkspace)
+  const [workspace] = createResource(() =>
+    room ? room.workspace : loadWorkspace()
+  )
 
   const version = () =>
     ready()
@@ -54,7 +67,7 @@ export function Builder() {
   )
 
   createEffect(() => {
-    if (catalog.error) {
+    if (catalog.error || (room && workspace.error)) {
       return
     }
 
@@ -74,7 +87,11 @@ export function Builder() {
         setSaveState('error')
       }
 
-      void startSession()
+      if (room) {
+        refreshShared(room.shared)
+      } else {
+        void startSession()
+      }
     }
   })
 
@@ -82,18 +99,65 @@ export function Builder() {
     <Show
       when={ready()}
       fallback={
-        <Splash
-          error={catalog.error?.message}
-          onRetry={() => void refetch()}
-        />
+        <Show
+          when={room && (workspace.loading || workspace.error)}
+          fallback={
+            <Splash
+              error={catalog.error?.message}
+              onRetry={() => void refetch()}
+            />
+          }
+        >
+          <div class="drafting grid h-dvh place-items-center p-6">
+            <div
+              class="max-w-md rounded-xl border border-line bg-panel p-6 text-center shadow-sm"
+              role="status"
+            >
+              <p class="font-semibold">
+                {roomState()?.status === 'error'
+                  ? 'Could not open this room'
+                  : 'Joining shared room…'}
+              </p>
+              <p class="mt-2 text-sm text-ink-2">
+                {roomState()?.error ??
+                  (roomState()?.status === 'connected'
+                    ? 'Waiting for someone with a saved copy to join. The room is not stored on the server.'
+                    : 'Connecting to the room. Check your connection if this takes a while.')}
+              </p>
+              <a
+                class="mt-4 inline-block text-sm text-accent underline"
+                href="/builder"
+              >
+                Return to personal workspace
+              </a>
+            </div>
+          </div>
+        </Show>
       }
     >
-      <Workbench loadingVersion={catalog.loading} />
+      <Workbench
+        loadingVersion={catalog.loading}
+        onLeaveRoom={
+          room
+            ? async () => {
+                try {
+                  await room.close(true)
+                  location.assign('/builder')
+                } catch (error) {
+                  notify((error as Error).message, 'critical')
+                }
+              }
+            : undefined
+        }
+      />
     </Show>
   )
 }
 
-function Workbench(props: { loadingVersion: boolean }) {
+function Workbench(props: {
+  loadingVersion: boolean
+  onLeaveRoom?: () => Promise<void>
+}) {
   const [agentReady, setAgentReady] = createSignal(false)
   const viewing = useSelector(editor, s => s.access === 'viewing')
 
@@ -141,6 +205,7 @@ function Workbench(props: { loadingVersion: boolean }) {
           <Toolbar
             loadingVersion={props.loadingVersion}
             agentReady={agentReady() && !!modelContext()}
+            onLeaveRoom={props.onLeaveRoom}
           />
 
           <div class="flex min-h-0 flex-1">

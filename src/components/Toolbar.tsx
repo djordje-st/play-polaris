@@ -9,7 +9,10 @@ import {
   setVersion,
   setViewport,
   undo,
+  canUndo as hasUndo,
+  canRedo as hasRedo,
 } from '../editor/store'
+import { createRoom, roomUrl } from '../editor/collaboration'
 import { purgeWorkspace } from '../editor/persistence'
 import { modKey, shortcutList } from '../editor/shortcuts'
 import { ExportDialog } from './ExportDialog'
@@ -21,12 +24,14 @@ import { Button, Icon, IconButton, Kbd, Popover, Segmented } from './ui'
 export function Toolbar(props: {
   loadingVersion: boolean
   agentReady: boolean
+  onLeaveRoom?: () => Promise<void>
 }) {
   const version = useSelector(editor, s => s.doc.version)
   const mode = useSelector(editor, s => s.mode)
   const viewport = useSelector(editor, s => s.viewport)
-  const canUndo = useSelector(editor, s => s.past.length > 0)
-  const canRedo = useSelector(editor, s => s.future.length > 0)
+  const canUndo = useSelector(editor, hasUndo)
+  const canRedo = useSelector(editor, hasRedo)
+  const room = useSelector(editor, s => s.room)
   const [exporting, setExporting] = createSignal(false)
   const [purging, setPurging] = createSignal(false)
 
@@ -186,13 +191,15 @@ export function Toolbar(props: {
           onClick={redo}
         />
 
-        <IconButton
-          icon="trash"
-          label="Clear local data"
-          tone="danger"
-          disabled={purging()}
-          onClick={() => void clearData()}
-        />
+        <Show when={!room()}>
+          <IconButton
+            icon="trash"
+            label="Clear local data"
+            tone="danger"
+            disabled={purging()}
+            onClick={() => void clearData()}
+          />
+        </Show>
 
         <span class="mx-1 h-5 w-px bg-line" />
 
@@ -262,6 +269,8 @@ export function Toolbar(props: {
           )}
         </Popover>
 
+        <Collaboration onLeave={props.onLeaveRoom} />
+
         <Button
           variant="primary"
           class="ml-1"
@@ -287,6 +296,7 @@ export function Toolbar(props: {
 function SaveStatus() {
   const state = useSelector(editor, s => s.saveState)
   const viewing = useSelector(editor, s => s.access === 'viewing')
+  const room = useSelector(editor, s => s.room)
 
   return (
     <Show
@@ -306,7 +316,9 @@ function SaveStatus() {
         title={
           state() === 'error'
             ? 'This browser blocked local storage, so changes will be lost when you close the tab. Export your pages to keep them.'
-            : 'Saved in this browser. Nothing leaves your device.'
+            : room()
+              ? 'Saved in this browser. Shared edits sync with people in this room.'
+              : 'Saved in this browser. Nothing leaves your device.'
         }
         aria-live="polite"
       >
@@ -323,6 +335,121 @@ function SaveStatus() {
         </Show>
       </span>
     </Show>
+  )
+}
+
+function Collaboration(props: { onLeave?: () => Promise<void> }) {
+  const room = useSelector(editor, s => s.room)
+  const [busy, setBusy] = createSignal(false)
+  const start = async () => {
+    setBusy(true)
+
+    try {
+      location.assign(await createRoom())
+    } catch {
+      notify(
+        'Could not save the shared room. Check browser storage and try again.',
+        'critical'
+      )
+    } finally {
+      setBusy(false)
+    }
+  }
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(roomUrl(room()!.id))
+      notify('Room link copied')
+    } catch {
+      notify('Select and copy the room link below.', 'critical')
+    }
+  }
+
+  return (
+    <Popover
+      label="Collaboration"
+      align="end"
+      class="w-80 p-4"
+      trigger={attrs => (
+        <Button
+          {...attrs}
+          title="Share and collaborate"
+        >
+          <Icon
+            name="link"
+            size={14}
+          />
+          Share
+          <Show when={room()}>
+            <span
+              class={`size-1.5 rounded-full ${room()?.status === 'connected' ? 'bg-ok' : 'bg-warn'}`}
+            />
+          </Show>
+        </Button>
+      )}
+    >
+      {() => (
+        <Show
+          when={room()}
+          fallback={
+            <>
+              <p class="font-semibold">Edit together</p>
+              <p class="mt-1 mb-3 text-sm text-ink-2">
+                Start a shared copy of your pages. Your personal workspace stays
+                here. Anyone with the link can edit.
+              </p>
+              <Button
+                variant="primary"
+                disabled={busy()}
+                onClick={() => void start()}
+              >
+                {busy() ? 'Creating…' : 'Start shared session'}
+              </Button>
+            </>
+          }
+        >
+          {r => (
+            <>
+              <p
+                class="font-semibold"
+                role="status"
+              >
+                {r().status === 'connected'
+                  ? `${r().peers} ${r().peers === 1 ? 'person' : 'people'} connected`
+                  : r().status === 'error'
+                    ? 'Sync paused'
+                    : 'Reconnecting…'}
+              </p>
+              <p class="mt-1 text-sm text-ink-2">
+                {r().error ??
+                  'Anyone with this link can edit. Keep it to reopen your saved copy.'}
+              </p>
+              <input
+                class="mt-3 w-full rounded-md border border-line bg-chrome p-2 text-sm"
+                aria-label="Room link"
+                readonly
+                value={roomUrl(r().id)}
+                onFocus={e => e.currentTarget.select()}
+              />
+              <p class="mt-2 text-xs text-ink-3">
+                Someone with a saved copy must be online for new people to join.
+                Changes are saved in each browser.
+              </p>
+              <div class="mt-3 flex gap-2">
+                <Button
+                  variant="primary"
+                  onClick={() => void copy()}
+                >
+                  Copy link
+                </Button>
+                <Button onClick={() => void props.onLeave?.()}>
+                  Leave room
+                </Button>
+              </div>
+            </>
+          )}
+        </Show>
+      )}
+    </Popover>
   )
 }
 

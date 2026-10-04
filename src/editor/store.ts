@@ -22,6 +22,7 @@ import {
 } from './model'
 import type { Catalog, Manifest } from '../polaris/catalog'
 import type { Doc, ElementNode, Page, TreeNode, Version } from './model'
+import type { SharedDocument } from './shared'
 
 export type Viewport = 'desktop' | 'tablet' | 'mobile'
 
@@ -96,6 +97,13 @@ export type State = {
   inserting: Inserting | null
   presets: Array<Preset>
   access: 'editing' | 'viewing'
+  shared: SharedDocument | null
+  room: {
+    id: string
+    status: 'connecting' | 'connected' | 'offline' | 'error'
+    peers: number
+    error?: string
+  } | null
 }
 
 export const editor = createStore<State>({
@@ -119,6 +127,8 @@ export const editor = createStore<State>({
   inserting: null,
   presets: [],
   access: 'editing',
+  shared: null,
+  room: null,
 })
 
 // The store is a singleton; hot-swapping it would orphan mounted components.
@@ -236,12 +246,41 @@ export const setAccess = (access: State['access']) => patch({ access })
 export const setSaveState = (saveState: State['saveState']) =>
   S().saveState !== saveState && patch({ saveState })
 
+export const setRoom = (room: State['room']) => patch({ room })
+
+export const canUndo = (s: State = S()) =>
+  s.shared ? s.shared.history.canUndo() : s.past.length > 0
+
+export const canRedo = (s: State = S()) =>
+  s.shared ? s.shared.history.canRedo() : s.future.length > 0
+
+export function refreshShared(shared: SharedDocument) {
+  const doc = shared.read()
+
+  if (doc) {
+    update(s => settle({ ...s, doc, shared, past: [], future: [] }))
+  }
+}
+
 // Merge consecutive edits with the same key so typing undoes as one action.
 
 type CommitOptions = { key?: string; select?: string | null }
 
 function commit(recipe: (doc: Doc) => Doc, opts: CommitOptions = {}) {
   if (!canEdit()) {
+    return
+  }
+
+  const current = S()
+
+  if (current.shared) {
+    current.shared.write(current.doc, recipe(current.doc), opts.key)
+    refreshShared(current.shared)
+
+    if (opts.select !== undefined) {
+      select(opts.select)
+    }
+
     return
   }
 
@@ -297,6 +336,17 @@ export function undo() {
     return
   }
 
+  if (S().shared) {
+    if (!S().shared!.history.canUndo()) {
+      return
+    }
+
+    S().shared!.history.undo()
+    refreshShared(S().shared!)
+
+    return
+  }
+
   update(s => {
     const prev = s.past.at(-1)
 
@@ -316,6 +366,17 @@ export function undo() {
 
 export function redo() {
   if (!canEdit()) {
+    return
+  }
+
+  if (S().shared) {
+    if (!S().shared!.history.canRedo()) {
+      return
+    }
+
+    S().shared!.history.redo()
+    refreshShared(S().shared!)
+
     return
   }
 
@@ -346,8 +407,18 @@ export const setMode = (mode: Mode) => patch({ mode, hoveredId: null })
 
 export const setViewport = (viewport: Viewport) => patch({ viewport })
 
-export const setVersion = (version: Version) =>
-  canEdit() && update(s => ({ ...s, doc: { ...s.doc, version } }))
+export const setVersion = (version: Version) => {
+  if (!canEdit()) {
+    return
+  }
+
+  if (S().shared) {
+    S().shared!.settings.set('version', version)
+    refreshShared(S().shared!)
+  } else {
+    update(s => ({ ...s, doc: { ...s.doc, version } }))
+  }
+}
 
 export const setCatalog = (c: Catalog) => patch({ catalog: c })
 

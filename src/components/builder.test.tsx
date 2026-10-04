@@ -12,8 +12,15 @@ const persistence = vi.hoisted(() => ({
   takeOver: vi.fn(),
   purgeWorkspace: vi.fn(),
 }))
+const collaboration = vi.hoisted(() => ({
+  roomId: vi.fn(),
+  createRoom: vi.fn(),
+  joinRoom: vi.fn(),
+  roomUrl: (id: string) => `https://example.com/builder?room=${id}`,
+}))
 
 vi.mock('../editor/persistence', () => persistence)
+vi.mock('../editor/collaboration', () => collaboration)
 
 let store: typeof Store
 
@@ -21,6 +28,9 @@ beforeEach(async () => {
   vi.resetModules()
   localStorage.setItem('polaris-playground:tour-seen', '1')
   persistence.loadWorkspace.mockReset().mockResolvedValue(null)
+  collaboration.roomId.mockReset().mockReturnValue(null)
+  collaboration.createRoom.mockReset()
+  collaboration.joinRoom.mockReset()
   persistence.startSession.mockReset().mockResolvedValue(undefined)
   persistence.purgeWorkspace.mockReset().mockResolvedValue(undefined)
   persistence.takeOver
@@ -50,6 +60,131 @@ async function start() {
 
   return root
 }
+
+test('sharing creates a separate room and reports a failed local save', async () => {
+  const assign = vi.spyOn(location, 'assign').mockImplementation(() => {})
+  const root = await start()
+
+  collaboration.createRoom.mockRejectedValueOnce(new Error('Storage blocked'))
+  button('Start shared session', root).click()
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain('Could not save the shared room')
+  )
+  expect(assign).not.toHaveBeenCalled()
+  collaboration.createRoom.mockResolvedValueOnce(
+    'https://example.com/builder?room=shared'
+  )
+  button('Start shared session', root).click()
+  await vi.waitFor(() =>
+    expect(assign).toHaveBeenCalledWith(
+      'https://example.com/builder?room=shared'
+    )
+  )
+})
+
+test('joining waits for a saved copy, exposes connection state and leaves without touching personal storage', async () => {
+  const { SharedDocument } = await import('../editor/shared')
+  const shared = new SharedDocument()
+
+  shared.write(
+    { version: 'v1', pages: [] },
+    {
+      version: 'v1',
+      pages: [{ id: 'shared-page', name: 'Shared page', nodes: [] }],
+    }
+  )
+  shared.history.clear()
+
+  const id = crypto.randomUUID()
+  let receive!: (value: Store.Snapshot) => void
+  const workspace = new Promise<Store.Snapshot>(resolve => {
+    receive = resolve
+  })
+  const close = vi.fn().mockResolvedValue(undefined)
+
+  collaboration.roomId.mockReturnValue(id)
+  collaboration.joinRoom.mockReturnValue({ shared, workspace, close })
+  store.setRoom({ id, status: 'connecting', peers: 0 })
+
+  const { Builder } = await import('./Builder')
+  const root = mount(() => <Builder />)
+
+  expect(root.textContent).toContain('Connecting to the room')
+  store.setRoom({ id, status: 'connected', peers: 1 })
+  expect(root.textContent).toContain('Waiting for someone with a saved copy')
+  receive({
+    ...shared.read()!,
+    pageId: 'shared-page',
+    viewport: 'desktop',
+    presets: [],
+  })
+  await vi.waitFor(() => expect(store.editor.state.ready).toBe(true))
+  expect(persistence.loadWorkspace).not.toHaveBeenCalled()
+  expect(persistence.startSession).not.toHaveBeenCalled()
+  expect(root.textContent).toContain('1 person connected')
+  expect(root.querySelector('[aria-label="Clear local data"]')).toBeNull()
+
+  const link = root.querySelector<HTMLInputElement>('[aria-label="Room link"]')!
+
+  link.dispatchEvent(new Event('focusin', { bubbles: true }))
+  expect(link.value).toBe(collaboration.roomUrl(id))
+
+  const copy = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue()
+
+  button('Copy link', root).click()
+  await vi.waitFor(() => expect(root.textContent).toContain('Room link copied'))
+  copy.mockRejectedValueOnce(new Error('Clipboard blocked'))
+  button('Copy link', root).click()
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain('Select and copy the room link')
+  )
+  store.setRoom({ id, status: 'connected', peers: 2 })
+  expect(root.textContent).toContain('2 people connected')
+  store.setRoom({ id, status: 'offline', peers: 0 })
+  expect(root.textContent).toContain('Reconnecting')
+  store.setRoom({ id, status: 'error', peers: 0, error: 'Sync failed' })
+  expect(root.textContent).toContain('Sync paused')
+
+  const assign = vi.spyOn(location, 'assign').mockImplementation(() => {})
+
+  close.mockRejectedValueOnce(new Error('Could not save this room'))
+  button('Leave room', root).click()
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain('Could not save this room')
+  )
+  expect(assign).not.toHaveBeenCalled()
+  button('Leave room', root).click()
+  await vi.waitFor(() => expect(assign).toHaveBeenCalledWith('/builder'))
+  expect(close).toHaveBeenCalledTimes(2)
+  expect(close).toHaveBeenLastCalledWith(true)
+  shared.doc.destroy()
+})
+
+test('failed room storage never initializes a blank shared workspace', async () => {
+  const id = crypto.randomUUID()
+
+  collaboration.roomId.mockReturnValue(id)
+  collaboration.joinRoom.mockReturnValue({
+    workspace: Promise.reject(new Error('Blocked')),
+    close: vi.fn(),
+  })
+  store.setRoom({
+    id,
+    status: 'error',
+    peers: 0,
+    error: 'Local room storage is unavailable.',
+  })
+
+  const { Builder } = await import('./Builder')
+  const root = mount(() => <Builder />)
+
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain('Could not open this room')
+  )
+  expect(store.editor.state.ready).toBe(false)
+  expect(root.querySelector('a')?.getAttribute('href')).toBe('/builder')
+  expect(persistence.startSession).not.toHaveBeenCalled()
+})
 
 test('startup shows loading, retries failed catalog requests and initializes a usable workspace', async () => {
   vi.mocked(fetch).mockResolvedValueOnce(new Response('', { status: 503 }))

@@ -39,9 +39,11 @@
     "driver.js": "1.9.0",
     "fflate": "^0.8.3",
     "solid-js": "^1.9.12",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "yjs": "^13.6.33"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261004.1",
     "@tanstack/devtools-vite": "0.8.5",
     "@tanstack/eslint-config": "0.4.0",
     "@tanstack/intent": "^0.5.2",

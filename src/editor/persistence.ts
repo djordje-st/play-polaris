@@ -26,20 +26,20 @@ const DB_NAME = 'polaris-playground-data'
 const DB_VERSION = 10
 const STORES = ['pages', 'presets', 'meta']
 
-const requested = <T>(request: IDBRequest<T>) =>
+export const requested = <T>(request: IDBRequest<T>) =>
   new Promise<T>((resolve, reject) => {
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
 
-const committed = (tx: IDBTransaction) =>
+export const committed = (tx: IDBTransaction) =>
   new Promise<void>((resolve, reject) => {
     tx.oncomplete = () => resolve()
     tx.onerror = tx.onabort = () =>
       reject(tx.error ?? new Error('The transaction was aborted'))
   })
 
-function openDatabase(
+export function openDatabase(
   name: string,
   version?: number,
   upgrade?: (db: IDBDatabase) => void

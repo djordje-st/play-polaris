@@ -6,6 +6,8 @@ import { inspectPreview, screenshotPreview } from './preview'
 import {
   addPage,
   canEdit,
+  canUndo,
+  canRedo,
   catalog,
   currentPage,
   deletePage,
@@ -142,8 +144,8 @@ const TOOLS: Array<
         selectedId: s.selectedId,
         viewport: s.viewport,
         mode: s.mode,
-        canUndo: s.past.length > 0,
-        canRedo: s.future.length > 0,
+        canUndo: canUndo(s),
+        canRedo: canRedo(s),
         tips: [
           'Build UI by passing Polaris web component HTML (s-* tags) to insert_html or set_page_html.',
           'Use camelCase attribute names as in Shopify docs, e.g. gridTemplateColumns, labelAccessibilityVisibility.',
@@ -247,7 +249,7 @@ const TOOLS: Array<
   ...(['undo', 'redo'] as const).map(name => ({
     name,
     title: name === 'undo' ? 'Undo' : 'Redo',
-    description: `${name === 'undo' ? 'Undoes' : 'Redoes'} one step of shared workspace history, including user edits. Does not affect saved components or the Polaris version. Returns whether anything changed and available history.`,
+    description: `${name === 'undo' ? 'Undoes' : 'Redoes'} one step of this browser's editing history, including user and agent edits. Does not affect saved components or the Polaris version. Returns whether anything changed and available history.`,
     inputSchema: { type: 'object', properties: {} },
     run: () => {
       const before = editor.state.doc
@@ -261,8 +263,8 @@ const TOOLS: Array<
       return {
         changed: editor.state.doc !== before,
         pageId: currentPage().id,
-        canUndo: editor.state.past.length > 0,
-        canRedo: editor.state.future.length > 0,
+        canUndo: canUndo(),
+        canRedo: canRedo(),
       }
     },
   })),
