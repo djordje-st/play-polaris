@@ -9,12 +9,13 @@ export const Route = createFileRoute('/llms.txt')({
 
 > ${SITE.summary}
 
-${SITE.name} runs in the browser. It loads Shopify's Polaris web components from Shopify's CDN (polaris-1.js for v1, polaris-2.0-rc.js for the 2.0 release candidate) and builds its component catalog from the official @shopify/polaris-types packages. Work is stored locally in IndexedDB; there are no accounts and nothing is uploaded. It is an independent tool, not made or endorsed by Shopify. Last updated ${SITE.updated}.
+${SITE.name} runs in the browser. It loads Shopify's Polaris web components from Shopify's CDN (polaris-1.js for v1, polaris-2.0-rc.js for the 2.0 release candidate) and builds its component catalog from the official @shopify/polaris-types packages. Work is saved in the browser's IndexedDB storage. Optional shared sessions relay edits to other participants without keeping a permanent server copy; anyone with the room link can edit. There are no accounts. It is an independent tool, not made or endorsed by Shopify. Last updated ${SITE.updated}.
 
 ## Pages
 
 - [Home](${SITE.url}/): The official website for ${SITE.name}, with features, workflow, and answers to common questions.
 - [Builder](${SITE.url}/builder): The app itself. Layers and components on the left, a live Polaris preview in the middle, properties on the right.
+- [Privacy policy](${SITE.url}/privacy): Local storage, collaboration, optional analytics, service providers and privacy choices.
 - [Source code](${SITE.repository}): The open-source repository, issue tracker, and contribution guide.
 - [License](${SITE.repository}/blob/main/LICENSE): MIT License.
 

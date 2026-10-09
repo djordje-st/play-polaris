@@ -11,7 +11,7 @@ export default defineConfig({
     devtools(),
     cloudflare({ viteEnvironment: { name: 'ssr' } }),
     tailwindcss(),
-    tanstackStart(),
+    tanstackStart({ server: { build: { inlineCss: true } } }),
     solidPlugin({ ssr: true }),
   ],
 })

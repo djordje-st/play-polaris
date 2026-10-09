@@ -1,310 +1,576 @@
-import { For, onMount } from 'solid-js'
+import { For, onCleanup, onMount } from 'solid-js'
 import { Link } from '@tanstack/solid-router'
 import { FAQ, FEATURES, SITE, STEPS } from '../site'
-import { initTheme, isDark } from '../editor/theme'
+import { initTheme } from '../editor/theme'
+import { BuilderShowcase, ExportExample } from './HomeDemos'
 import { Logo } from './Logo'
 import { ThemeMenu } from './ThemeMenu'
 import { Icon } from './ui'
 
-const button =
-  'items-center justify-center whitespace-nowrap rounded-lg font-medium transition-colors'
-const large = `${button} inline-flex h-11 px-5 text-[15px]`
-const primaryColors =
-  'bg-accent text-on-accent shadow-[0_1px_0_rgb(0_0_0/0.08)] hover:bg-accent-strong'
-const primary = `${large} ${primaryColors}`
-const secondary = `${large} border border-line-strong bg-raised text-ink hover:bg-hover`
-
 export function Home() {
-  onMount(initTheme)
+  let page!: HTMLDivElement
+  let observer: IntersectionObserver | undefined
+
+  onMount(() => {
+    initTheme()
+
+    if (!('IntersectionObserver' in window)) {
+      return
+    }
+
+    observer = new IntersectionObserver(
+      entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.setAttribute('data-revealed', '')
+            observer?.unobserve(entry.target)
+          }
+        }
+      },
+      { threshold: 0.15 }
+    )
+    page
+      .querySelectorAll('[data-reveal]')
+      .forEach(element => observer!.observe(element))
+  })
+  onCleanup(() => observer?.disconnect())
 
   return (
-    <div class="min-h-dvh bg-chrome text-[15px] leading-6">
+    <div
+      ref={page}
+      class="home"
+    >
       <a
         href="#main"
-        class="sr-only z-50 rounded-md bg-panel px-3 py-2 focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        class="home-skip"
       >
         Skip to content
       </a>
-
-      <header class="sticky top-0 z-20 border-b border-line bg-chrome/85 backdrop-blur">
-        <div class="mx-auto flex h-14 max-w-6xl items-center gap-6 px-5">
+      <header class="home-header">
+        <div class="home-container home-header-inner">
           <Link
             to="/"
-            class="flex items-center gap-2 font-semibold whitespace-nowrap"
+            class="home-brand"
           >
             <Logo />
-
             {SITE.name}
+            <span class="home-brand-mark">/</span>
           </Link>
-
           <nav
             aria-label="Main"
-            class="ml-auto hidden items-center gap-6 text-[14px] text-ink-2 sm:flex"
+            class="home-nav"
           >
-            <a
-              href="#features"
-              class="hover:text-ink"
-            >
-              Features
-            </a>
-
-            <a
-              href="#how-it-works"
-              class="hover:text-ink"
-            >
-              How it works
-            </a>
-
-            <a
-              href="#faq"
-              class="hover:text-ink"
-            >
-              FAQ
-            </a>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#faq">FAQ</a>
           </nav>
-
-          <div class="ml-auto flex items-center gap-2 sm:ml-0">
+          <div class="home-header-actions">
+            <a
+              href={SITE.repository}
+              class="home-github"
+            >
+              GitHub{' '}
+              <Icon
+                name="external"
+                size={13}
+              />
+            </a>
             <ThemeMenu />
-
-            {/* The builder needs a wide screen; phones get the hero's link. */}
             <Link
               to="/builder"
-              class={`${button} ${primaryColors} hidden h-9 px-4 text-[14px] sm:inline-flex`}
+              class="home-button home-button-primary home-nav-cta"
             >
-              Open the builder
+              Open builder{' '}
+              <Icon
+                name="chevronRight"
+                size={15}
+              />
             </Link>
           </div>
         </div>
       </header>
-
-      <main id="main">
+      <main
+        id="main"
+        tabIndex={-1}
+      >
         <section
+          class="home-hero"
           aria-labelledby="hero-title"
-          class="mx-auto max-w-6xl px-5 pt-16 pb-12 sm:pt-24"
         >
-          <h1
-            id="hero-title"
-            class="max-w-3xl text-[40px] leading-[1.06] font-semibold tracking-[-0.025em] text-balance sm:text-[58px]"
-          >
-            Prototype Shopify app screens with real Polaris components
-          </h1>
-
-          <p class="mt-6 max-w-xl text-[17px] leading-7 text-ink-2">
-            Drag Polaris web components into a live preview, let the builder
-            check them against Polaris rules, and export HTML or React. Free and
-            open source, in your browser, with no account.
-          </p>
-
-          <div class="mt-8 flex flex-wrap gap-3">
-            <Link
-              to="/builder"
-              class={primary}
-            >
-              Open the builder
-            </Link>
-
-            <a
-              href="#how-it-works"
-              class={secondary}
-            >
-              See how it works
-            </a>
-          </div>
-
-          <ul class="mt-7 flex flex-wrap gap-x-6 gap-y-2 text-[14px] text-ink-2">
-            <For
-              each={[
-                'Polaris v1 and the 2.0 release candidate',
-                'HTML and React export',
-                'Saved in your browser',
-              ]}
-            >
-              {fact => (
-                <li class="flex items-center gap-1.5">
+          <div class="home-container">
+            <div class="home-hero-copy">
+              <p class="home-eyebrow">
+                <span class="home-live-dot" />
+                The free Polaris visual builder
+              </p>
+              <h1 id="hero-title">
+                Shopify app UI.
+                <br />
+                <span>From idea to real.</span>
+              </h1>
+              <p class="home-hero-description">
+                Build with real Polaris web components. Drag, refine, and
+                preview your next Shopify app screen. Then take the code with
+                you.
+              </p>
+              <div class="home-hero-actions">
+                <Link
+                  to="/builder"
+                  class="home-button home-button-primary"
+                >
+                  Start building for free{' '}
                   <Icon
-                    name="check"
-                    size={15}
-                    class="text-ok"
+                    name="chevronRight"
+                    size={18}
                   />
-
-                  {fact}
-                </li>
-              )}
-            </For>
-          </ul>
+                </Link>
+                <a
+                  href="#builder-tour"
+                  class="home-button home-button-secondary"
+                >
+                  <Icon
+                    name="play"
+                    size={16}
+                  />{' '}
+                  Explore the builder
+                </a>
+              </div>
+              <p class="home-hero-footnote">
+                No signup. No installation. Just open and create.
+              </p>
+            </div>
+            <BuilderShowcase />
+          </div>
         </section>
-
-        <div class="mx-auto max-w-6xl px-5">
-          <img
-            src={`/builder-screenshot-${isDark() ? 'dark' : 'light'}.webp`}
-            alt="Polaris Playground showing a Billing screen with plan details, usage and payments, alongside component layers and the inspector"
-            width="1280"
-            height="800"
-            class="block h-auto w-full rounded-2xl border border-line-strong shadow-[0_1px_2px_rgb(16_24_40/0.06),0_24px_64px_-24px_rgb(16_24_40/0.35)]"
-          />
+        <div class="home-platform-strip home-container">
+          <p>
+            Made for your
+            <br />
+            <strong>Shopify app workflow.</strong>
+          </p>
+          <div>
+            <Icon
+              name="blocks"
+              size={20}
+            />
+            <span>
+              Real Polaris
+              <br />
+              <small>v1 + v2 RC</small>
+            </span>
+          </div>
+          <div>
+            <Icon
+              name="code"
+              size={20}
+            />
+            <span>
+              HTML & React
+              <br />
+              <small>Code you can use</small>
+            </span>
+          </div>
+          <div>
+            <Icon
+              name="sparkle"
+              size={20}
+            />
+            <span>
+              WebMCP ready
+              <br />
+              <small>Bring your AI agent</small>
+            </span>
+          </div>
+          <div>
+            <Icon
+              name="component"
+              size={20}
+            />
+            <span>
+              Open source
+              <br />
+              <small>Free under MIT</small>
+            </span>
+          </div>
         </div>
-
         <section
           id="features"
+          class="home-section home-container"
           aria-labelledby="features-title"
-          class="mx-auto max-w-6xl scroll-mt-20 px-5 pt-28 pb-24"
         >
-          <h2
-            id="features-title"
-            class="max-w-2xl text-[32px] leading-tight font-semibold tracking-[-0.02em]"
+          <div
+            class="home-section-heading"
+            data-reveal
           >
-            Everything you need to sketch an App Home screen
-          </h2>
-
-          <p class="mt-3 max-w-2xl text-[17px] leading-7 text-ink-2">
-            Built on Shopify's official component catalog, so what you design is
-            what Polaris can actually render.
-          </p>
-
-          <div class="mt-12 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <p class="home-eyebrow">Less friction. More flow.</p>
+              <h2 id="features-title">
+                Everything clicks
+                <br />
+                into place.
+              </h2>
+            </div>
+            <p>
+              A visual Shopify Polaris builder that understands what you're
+              making. Real components, useful guardrails, and room to
+              experiment.
+            </p>
+          </div>
+          <div class="home-feature-grid">
             <For each={FEATURES}>
-              {f => (
-                <article class="bg-panel p-6">
-                  <Icon
-                    name={f.icon}
-                    size={20}
-                    class="text-accent"
-                  />
-
-                  <h3 class="mt-4 text-[16px] font-semibold">{f.title}</h3>
-
-                  <p class="mt-1.5 text-ink-2">{f.body}</p>
+              {feature => (
+                <article
+                  class="home-feature"
+                  data-reveal
+                >
+                  <div class="home-feature-icon">
+                    <Icon
+                      name={feature.icon}
+                      size={22}
+                    />
+                  </div>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.body}</p>
+                  <span class="home-feature-detail">{feature.detail}</span>
                 </article>
               )}
             </For>
           </div>
         </section>
-
         <section
           id="how-it-works"
+          class="home-workflow"
           aria-labelledby="steps-title"
-          class="scroll-mt-14 border-y border-line bg-panel"
         >
-          <div class="mx-auto max-w-6xl px-5 py-24">
-            <h2
-              id="steps-title"
-              class="text-[32px] leading-tight font-semibold tracking-[-0.02em]"
+          <div class="home-container">
+            <div
+              class="home-section-heading"
+              data-reveal
             >
-              How it works
-            </h2>
-
-            <ol class="mt-12 grid gap-10 md:grid-cols-3">
+              <div>
+                <p class="home-eyebrow">A shorter path from here to there</p>
+                <h2 id="steps-title">Open. Build. Make it yours.</h2>
+              </div>
+              <Link
+                to="/builder"
+                class="home-text-link"
+              >
+                Let's build something{' '}
+                <Icon
+                  name="chevronRight"
+                  size={18}
+                />
+              </Link>
+            </div>
+            <ol class="home-steps">
               <For each={STEPS}>
-                {(step, i) => (
-                  <li>
-                    <span class="grid size-8 place-items-center rounded-full bg-accent-soft text-[14px] font-semibold text-accent tabular-nums">
-                      {i() + 1}
+                {(step, index) => (
+                  <li data-reveal>
+                    <span class="home-step-number">
+                      0{index() + 1}
+                      <span aria-hidden="true" />
                     </span>
-
-                    <h3 class="mt-4 text-[16px] font-semibold">{step.title}</h3>
-
-                    <p class="mt-1.5 text-ink-2">{step.body}</p>
+                    <h3>{step.title}</h3>
+                    <p>{step.body}</p>
                   </li>
                 )}
               </For>
             </ol>
           </div>
         </section>
-
+        <section
+          class="home-export home-container home-section"
+          aria-labelledby="export-title"
+        >
+          <div
+            class="home-export-copy"
+            data-reveal
+          >
+            <p class="home-eyebrow">A prototype with somewhere to go</p>
+            <h2 id="export-title">
+              Looks right.
+              <br />
+              Exports right.
+            </h2>
+            <p>
+              Your layout becomes readable Polaris markup. Copy a single screen,
+              download a full HTML document, or bring typed React JSX into your
+              app.
+            </p>
+            <ul class="home-check-list">
+              <li>
+                <Icon name="check" />
+                HTML or React JSX, with TypeScript support
+              </li>
+              <li>
+                <Icon name="check" />
+                One page or your whole project as a ZIP
+              </li>
+              <li>
+                <Icon name="check" />
+                Optional Polaris and App Bridge script tags
+              </li>
+            </ul>
+            <Link
+              to="/builder"
+              class="home-text-link"
+            >
+              Build it. Take it with you.{' '}
+              <Icon
+                name="chevronRight"
+                size={18}
+              />
+            </Link>
+          </div>
+          <div data-reveal>
+            <ExportExample />
+          </div>
+        </section>
+        <section
+          class="home-together home-container"
+          aria-labelledby="together-title"
+        >
+          <div
+            class="home-section-heading"
+            data-reveal
+          >
+            <div>
+              <p class="home-eyebrow">A little company goes a long way</p>
+              <h2 id="together-title">Good ideas travel better together.</h2>
+            </div>
+          </div>
+          <div class="home-together-grid">
+            <article
+              class="home-team-card"
+              data-reveal
+            >
+              <div
+                class="home-team-visual"
+                role="img"
+                aria-label="Illustration of two collaborators working on a shared app screen"
+              >
+                <div class="home-mini-page">
+                  <span class="home-mini-heading">Your next app</span>
+                  <div class="home-mini-block">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                  <div class="home-mini-grid">
+                    <span />
+                    <span />
+                    <span />
+                  </div>
+                </div>
+                <span class="home-person home-person-you">
+                  <Icon
+                    name="cursor"
+                    size={21}
+                  />
+                  <span>You</span>
+                </span>
+                <span class="home-person home-person-teammate">
+                  <Icon
+                    name="cursor"
+                    size={21}
+                  />
+                  <span>Teammate</span>
+                </span>
+                <span class="home-shared-note">
+                  <Icon
+                    name="link"
+                    size={14}
+                  />
+                  One link. A shared canvas.
+                </span>
+              </div>
+              <div class="home-card-copy">
+                <p class="home-eyebrow">Multiplayer, without the meetings</p>
+                <h3>Share a link. Build together.</h3>
+                <p>
+                  Invite someone into a shared copy of your workspace. Edit the
+                  same screens in real time, with undo for your own changes.
+                  Your personal workspace stays separate.
+                </p>
+                <a
+                  href="#sharing-faq"
+                  class="home-text-link"
+                >
+                  How shared sessions work{' '}
+                  <Icon
+                    name="chevronRight"
+                    size={16}
+                  />
+                </a>
+              </div>
+            </article>
+            <article
+              class="home-agent-card"
+              data-reveal
+            >
+              <div class="home-agent-visual">
+                <div class="home-agent-prompt">
+                  <Icon
+                    name="sparkle"
+                    size={19}
+                  />
+                  <span>“Build a settings page for my app.”</span>
+                </div>
+                <div
+                  class="home-agent-tools"
+                  role="group"
+                  aria-label="Example WebMCP workflow"
+                >
+                  <For
+                    each={[
+                      'Read the component catalog',
+                      'Build with real Polaris',
+                      'Validate and export',
+                    ]}
+                  >
+                    {(label, index) => (
+                      <div style={{ '--step': index() }}>
+                        <span class="home-agent-step">0{index() + 1}</span>
+                        {label}
+                        <Icon
+                          name="check"
+                          size={15}
+                        />
+                      </div>
+                    )}
+                  </For>
+                </div>
+                <span class="home-agent-note">
+                  Example workflow · Requires a WebMCP-compatible browser
+                </span>
+              </div>
+              <div class="home-card-copy">
+                <p class="home-eyebrow">Your AI gets a seat at the canvas</p>
+                <h3>Let your agent do the clicking.</h3>
+                <p>
+                  With WebMCP, an AI agent can inspect components, build pages,
+                  check layouts, and export code alongside you. See its changes
+                  in the canvas, and undo them like your own.
+                </p>
+                <a
+                  href={`${SITE.repository}#webmcp`}
+                  class="home-text-link"
+                >
+                  Explore the agent tools{' '}
+                  <Icon
+                    name="external"
+                    size={15}
+                  />
+                </a>
+              </div>
+            </article>
+          </div>
+        </section>
         <section
           id="faq"
+          class="home-faq home-container home-section"
           aria-labelledby="faq-title"
-          class="mx-auto max-w-6xl scroll-mt-20 px-5 py-24"
         >
-          <h2
-            id="faq-title"
-            class="text-[32px] leading-tight font-semibold tracking-[-0.02em]"
-          >
-            Questions and answers
-          </h2>
-
-          <div class="mt-12 grid gap-x-12 gap-y-10 md:grid-cols-2">
+          <div data-reveal>
+            <p class="home-eyebrow">Before you dive in</p>
+            <h2 id="faq-title">
+              A few things
+              <br />
+              worth knowing.
+            </h2>
+            <p>
+              Have another question?
+              <br />
+              <a
+                href={`${SITE.repository}/issues`}
+                class="home-text-link"
+              >
+                Find us on GitHub{' '}
+                <Icon
+                  name="external"
+                  size={14}
+                />
+              </a>
+            </p>
+          </div>
+          <div class="home-faq-list">
             <For each={FAQ}>
               {item => (
-                <div>
-                  <h3 class="text-[16px] font-semibold">{item.q}</h3>
-
-                  <p class="mt-2 text-ink-2">{item.a}</p>
-                </div>
+                <details id={item.id}>
+                  <summary>
+                    {item.q}
+                    <Icon
+                      name="plus"
+                      size={17}
+                    />
+                  </summary>
+                  <p>{item.a}</p>
+                </details>
               )}
             </For>
           </div>
         </section>
-
         <section
+          class="home-final"
           aria-labelledby="cta-title"
-          class="mx-auto max-w-6xl px-5 pb-24"
         >
-          <div class="drafting flex flex-col items-start gap-6 rounded-2xl border border-line p-10 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h2
-                id="cta-title"
-                class="text-[26px] leading-tight font-semibold tracking-[-0.02em]"
-              >
-                Your next screen is a few drags away
-              </h2>
-
-              <p class="mt-2 text-ink-2">
-                Start from a layout, or from a blank page.
-              </p>
-            </div>
-
+          <div
+            class="home-container"
+            data-reveal
+          >
+            <p class="home-eyebrow">Your next “what if” starts here</p>
+            <h2 id="cta-title">
+              Less setup.
+              <br />
+              More “look what I built.”
+            </h2>
+            <p>One browser tab. All the space you need to start.</p>
             <Link
               to="/builder"
-              class={primary}
+              class="home-button home-button-white"
             >
-              Open the builder
+              Open the builder{' '}
+              <Icon
+                name="chevronRight"
+                size={18}
+              />
             </Link>
+            <span class="home-final-note">
+              Free to use. Open source. Yours to explore.
+            </span>
           </div>
         </section>
       </main>
-
-      <footer class="border-t border-line">
-        <div class="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-[13px] text-ink-2 sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            {SITE.name} is an independent tool. Shopify and Polaris are
-            trademarks of Shopify Inc.
-          </p>
-
-          <nav
-            aria-label="Footer"
-            class="flex gap-5"
+      <footer class="home-footer home-container">
+        <div>
+          <Link
+            to="/"
+            class="home-brand"
           >
-            <Link
-              to="/builder"
-              class="hover:text-ink"
-            >
-              Builder
-            </Link>
-
-            <a
-              href={SITE.repository}
-              class="hover:text-ink"
-            >
-              GitHub
-            </a>
-
-            <a
-              href="https://shopify.dev/docs/api/app-home/web-components"
-              class="hover:text-ink"
-              rel="noopener"
-            >
-              Polaris docs
-            </a>
-
-            <a
-              href="/llms.txt"
-              class="hover:text-ink"
-            >
-              llms.txt
-            </a>
-          </nav>
+            <Logo />
+            {SITE.name}
+          </Link>
+          <p>A small tool for your next big idea.</p>
         </div>
+        <nav aria-label="Footer">
+          <Link to="/builder">Builder</Link>
+          <Link to="/privacy">Privacy &amp; choices</Link>
+          <a href={SITE.repository}>GitHub</a>
+          <a href="https://shopify.dev/docs/api/app-home/web-components">
+            Polaris docs
+          </a>
+          <a href="/llms.txt">llms.txt</a>
+        </nav>
+        <p class="home-disclaimer">
+          Independent and open source. Not affiliated with or endorsed by
+          Shopify. Shopify and Polaris are trademarks of Shopify Inc.
+        </p>
+        <a
+          class="home-license"
+          href={`${SITE.repository}/blob/main/LICENSE`}
+        >
+          Made to be shared. MIT licensed.
+        </a>
       </footer>
     </div>
   )

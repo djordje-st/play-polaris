@@ -1,7 +1,7 @@
 export function Logo(props: { class?: string }) {
   return (
     <img
-      src="/logo-192.png"
+      src="/favicon.png"
       width="28"
       height="28"
       alt=""

@@ -1,13 +1,14 @@
 import { createFileRoute } from '@tanstack/solid-router'
 import { Home } from '../components/Home'
 import { FAQ, FEATURES, SITE } from '../site'
+import '../components/Home.css'
 
 export const Route = createFileRoute('/')({
   head: () => {
     const url = `${SITE.url}/`
     const image = `${SITE.url}/og.png`
     const imageAlt =
-      'PlayPolaris: layers, a live Polaris preview and the inspector'
+      'PlayPolaris: free Shopify Polaris UI builder with a real app screen and component inspector'
 
     const graph = {
       '@context': 'https://schema.org',
@@ -33,8 +34,13 @@ export const Route = createFileRoute('/')({
           browserRequirements: 'Requires JavaScript and a modern web browser',
           isAccessibleForFree: true,
           offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-          featureList: FEATURES.map(f => f.title),
-          screenshot: image,
+          featureList: [
+            ...FEATURES.map(f => f.title),
+            'HTML and React JSX export',
+            'Real-time collaborative editing',
+            'AI agent tools over WebMCP',
+          ],
+          screenshot: `${SITE.url}/builder-screenshot-light.webp`,
           dateModified: SITE.updated,
           isPartOf: { '@id': `${url}#website` },
         },
@@ -71,7 +77,20 @@ export const Route = createFileRoute('/')({
         { name: 'twitter:image', content: image },
         { name: 'twitter:image:alt', content: imageAlt },
       ],
-      links: [{ rel: 'canonical', href: url }],
+      links: [
+        { rel: 'canonical', href: url },
+        {
+          rel: 'preload',
+          as: 'image',
+          href: '/builder-screenshot-light.avif',
+          type: 'image/avif',
+          imagesrcset:
+            '/builder-screenshot-light-768.avif 768w, /builder-screenshot-light.avif 1280w',
+          imagesizes:
+            '(max-width: 760px) calc(100vw - 40px), (max-width: 1240px) calc(100vw - 80px), 1160px',
+          fetchpriority: 'high',
+        },
+      ],
       scripts: [
         {
           type: 'application/ld+json',

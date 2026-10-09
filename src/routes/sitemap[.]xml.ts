@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/solid-router'
 import { SITE } from '../site'
 
-// Only the homepage: the builder is an app shell that asks not to be indexed.
+// Public pages only: the builder asks not to be indexed.
 export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
@@ -11,6 +11,10 @@ export const Route = createFileRoute('/sitemap.xml')({
   <url>
     <loc>${SITE.url}/</loc>
     <lastmod>${SITE.updated}</lastmod>
+  </url>
+  <url>
+    <loc>${SITE.url}/privacy</loc>
+    <lastmod>2026-10-09</lastmod>
   </url>
 </urlset>
 `

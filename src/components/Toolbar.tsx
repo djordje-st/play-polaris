@@ -265,6 +265,15 @@ export function Toolbar(props: {
                   )}
                 </For>
               </dl>
+
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noreferrer"
+                class="mt-3 block border-t border-line pt-3 font-medium underline underline-offset-4"
+              >
+                Privacy &amp; analytics choices
+              </a>
             </>
           )}
         </Popover>

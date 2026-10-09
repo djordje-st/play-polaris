@@ -5,12 +5,13 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
+  useLocation,
 } from '@tanstack/solid-router'
 import { HydrationScript } from 'solid-js/web'
-import { Suspense } from 'solid-js'
+import { Show, Suspense } from 'solid-js'
 import { THEME_SCRIPT } from '../editor/theme'
-import interLatin from '../assets/fonts/inter-latin.woff2?url'
-import styleCss from '../styles.css?url'
+import { PrivacyChoices } from '../components/PrivacyChoices'
+import '../styles.css'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -29,14 +30,6 @@ export const Route = createRootRoute({
       },
       { rel: 'apple-touch-icon', href: '/logo-180.png', sizes: '180x180' },
       { rel: 'manifest', href: '/site.webmanifest' },
-      {
-        rel: 'preload',
-        href: interLatin,
-        as: 'font',
-        type: 'font/woff2',
-        crossOrigin: 'anonymous',
-      },
-      { rel: 'stylesheet', href: styleCss },
     ],
   }),
   shellComponent: RootComponent,
@@ -74,18 +67,14 @@ function NotFound() {
 }
 
 function RootComponent() {
+  const location = useLocation()
+
   return (
     <html lang="en">
       <head>
         <HydrationScript />
 
         <ScriptOnce children={THEME_SCRIPT} />
-
-        <script
-          defer
-          src="https://umami-production-5cba.up.railway.app/script.js"
-          data-website-id="4a2e8287-6a27-45f5-9e92-c6abbfabe333"
-        />
       </head>
 
       <body>
@@ -94,6 +83,10 @@ function RootComponent() {
         <Suspense>
           <Outlet />
         </Suspense>
+
+        <Show when={location().pathname !== '/privacy'}>
+          <PrivacyChoices />
+        </Show>
 
         <Scripts />
       </body>

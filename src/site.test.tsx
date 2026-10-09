@@ -36,7 +36,7 @@ test('homepage renders content, navigation and canonical production metadata', a
   const root = mount(() => <RouterProvider router={router} />)
 
   await vi.waitFor(() =>
-    expect(root.querySelector('h1')?.textContent).toContain('Prototype Shopify')
+    expect(root.querySelector('h1')?.textContent).toContain('Shopify app UI.')
   )
   expect(router.options.scrollRestoration).toBe(true)
   expect(router.options.defaultPreload).toBe('intent')
@@ -50,15 +50,20 @@ test('homepage renders content, navigation and canonical production metadata', a
   }
 
   expect(root.querySelector('a[href="/builder"]')).not.toBeNull()
+  expect(root.querySelector('a[href="/privacy"]')).not.toBeNull()
   expect(root.querySelector('a[href="#main"]')).not.toBeNull()
   expect(root.querySelector(`a[href="${SITE.repository}"]`)).not.toBeNull()
 
-  const screenshot = root.querySelector<HTMLImageElement>('main img')!
+  const screenshot = () => root.querySelector<HTMLImageElement>('main img')!
 
   button('Light', root).click()
-  expect(screenshot.getAttribute('src')).toBe('/builder-screenshot-light.webp')
+  expect(screenshot().getAttribute('src')).toBe(
+    '/builder-screenshot-light.webp'
+  )
+  expect(screenshot().getAttribute('srcset')).toContain('768.webp 768w')
+  expect(screenshot().getAttribute('fetchpriority')).toBe('high')
   button('Dark', root).click()
-  expect(screenshot.getAttribute('src')).toBe('/builder-screenshot-dark.webp')
+  expect(screenshot().getAttribute('src')).toBe('/builder-screenshot-dark.webp')
   button('System', root).click()
 
   const index = router.state.matches.find(match => match.routeId === '/')!
@@ -92,12 +97,90 @@ test('homepage renders content, navigation and canonical production metadata', a
     url: 'https://playpolaris.dev/builder',
     sameAs: SITE.repository,
     license: `${SITE.repository}/blob/main/LICENSE`,
+    screenshot: `${SITE.url}/builder-screenshot-light.webp`,
   })
   expect(graph['@graph'][2]['@id']).toBe('https://playpolaris.dev/#faq')
   expect(graph['@graph'][2].mainEntity).toHaveLength(FAQ.length)
   expect(router.state.matches[0]!.links).toContainEqual(
     expect.objectContaining({ rel: 'manifest', href: '/site.webmanifest' })
   )
+})
+
+test('homepage tour and export examples respond to visitor choices', async () => {
+  const router = getRouter()
+
+  router.update({ history: createMemoryHistory({ initialEntries: ['/'] }) })
+  await router.load()
+
+  const root = mount(() => <RouterProvider router={router} />)
+
+  await vi.waitFor(() => expect(root.querySelector('h1')).not.toBeNull())
+  button('Light', root).click()
+
+  const tour = root.querySelector('[aria-label="Explore the builder"]')!
+  const choices = [...tour.querySelectorAll('button')]
+
+  for (const [index, file] of [
+    'builder-screenshot',
+    'home/inspect',
+    'home/export',
+  ].entries()) {
+    choices[index]!.click()
+
+    const screenshot = root.querySelector<HTMLImageElement>('main img')!
+
+    expect(screenshot.src).toContain(`/${file}-light.webp`)
+
+    const avif = root.querySelector('picture source[type="image/avif"]')
+
+    if (index === 0) {
+      expect(avif?.getAttribute('srcset')).toContain(
+        '/builder-screenshot-light-768.avif 768w'
+      )
+    } else {
+      expect(avif).toBeNull()
+    }
+
+    expect(screenshot.alt.length).toBeGreaterThan(40)
+    expect(
+      choices.filter(choice => choice.getAttribute('aria-pressed') === 'true')
+    ).toEqual([choices[index]])
+  }
+
+  button('Dark', root).click()
+  expect(root.querySelector('main img')?.getAttribute('src')).toBe(
+    '/home/export-dark.webp'
+  )
+  choices[0]!.click()
+  expect(
+    root.querySelector('picture source')?.getAttribute('srcset')
+  ).toContain('/builder-screenshot-dark-768.avif 768w')
+  expect(root.querySelector('main img')?.getAttribute('src')).toBe(
+    '/builder-screenshot-dark.webp'
+  )
+  button('System', root).click()
+
+  button('React JSX', root).click()
+  expect(root.querySelector('pre')?.textContent).toContain(
+    '<reference types="@shopify/polaris-types" />'
+  )
+  expect(root.querySelector('pre')?.textContent).toContain(
+    'export default function AppScreen()'
+  )
+  expect(button('React JSX', root).getAttribute('aria-pressed')).toBe('true')
+  expect(button('HTML', root).getAttribute('aria-pressed')).toBe('false')
+  button('HTML', root).click()
+  expect(root.querySelector('pre')?.textContent).toMatch(/^<s-page/)
+  expect(root.querySelector('pre')?.textContent).not.toContain('export default')
+
+  expect(root.querySelectorAll('details')).toHaveLength(FAQ.length)
+  expect(root.querySelector('#sharing-faq')?.textContent).toContain(
+    'no permanent server copy'
+  )
+
+  for (const link of root.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')) {
+    expect(root.querySelector(link.getAttribute('href')!)).not.toBeNull()
+  }
 })
 
 test('unknown routes render recovery links', async () => {
@@ -115,6 +198,45 @@ test('unknown routes render recovery links', async () => {
   )
   expect(root.querySelector('a[href="/"]')?.textContent).toBe('Go home')
   expect(root.querySelector('a[href="/builder"]')).not.toBeNull()
+})
+
+test('privacy policy is rendered with canonical metadata, data practices and valid section links', async () => {
+  const router = getRouter()
+
+  router.update({
+    history: createMemoryHistory({ initialEntries: ['/privacy'] }),
+  })
+  await router.load()
+
+  const root = mount(() => <RouterProvider router={router} />)
+
+  await vi.waitFor(() =>
+    expect(root.querySelector('h1')?.textContent).toBe('Privacy policy')
+  )
+  expect(root.querySelectorAll('h1')).toHaveLength(1)
+
+  for (const link of root.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')) {
+    expect(root.querySelector(link.getAttribute('href')!)).not.toBeNull()
+  }
+
+  expect(root.textContent).toContain(
+    'Anyone with the room link can read and edit'
+  )
+  expect(root.textContent).toContain('rooms are not end-to-end encrypted')
+  expect(root.textContent).toContain('Global Privacy Control')
+  expect(root.textContent).toContain('This does not clear shared-room copies')
+  expect(root.querySelector('main nav')).toBeNull()
+  expect(root.querySelector('.privacy-choices-banner')).toBeNull()
+  expect(button('Allow analytics', root)).not.toBeNull()
+  expect(button('Keep analytics off', root)).not.toBeNull()
+
+  const page = router.state.matches.find(match => match.routeId === '/privacy')!
+
+  expect(page.links).toContainEqual({
+    rel: 'canonical',
+    href: 'https://playpolaris.dev/privacy',
+  })
+  expect(page.meta).toContainEqual({ name: 'robots', content: 'index, follow' })
 })
 
 test('builder is client-only, noindex, preloads required assets and offers error recovery', async () => {
@@ -196,6 +318,9 @@ test.each([
         'https://playpolaris.dev/'
       )
       expect(xml.querySelector('lastmod')?.textContent).toBe(SITE.updated)
+      expect(
+        [...xml.querySelectorAll('loc')].map(loc => loc.textContent)
+      ).toEqual(['https://playpolaris.dev/', 'https://playpolaris.dev/privacy'])
       expect(body).not.toContain('/builder')
     } else {
       expect(body).toContain('[Home](https://playpolaris.dev/)')
