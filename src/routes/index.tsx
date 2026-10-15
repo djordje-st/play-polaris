@@ -1,15 +1,11 @@
 import { createFileRoute } from '@tanstack/solid-router'
 import { Home } from '../components/Home'
-import { FAQ, FEATURES, SITE } from '../site'
+import { FAQ, FEATURES, SITE, pageHead } from '../site'
 import '../components/Home.css'
 
 export const Route = createFileRoute('/')({
   head: () => {
-    const url = `${SITE.url}/`
-    const image = `${SITE.url}/og.png`
-    const imageAlt =
-      'PlayPolaris: free Shopify Polaris UI builder with a real app screen and component inspector'
-
+    const { url, meta, links } = pageHead('/', SITE.title, SITE.description)
     const graph = {
       '@context': 'https://schema.org',
       '@graph': [
@@ -18,6 +14,7 @@ export const Route = createFileRoute('/')({
           '@id': `${url}#website`,
           url,
           name: SITE.name,
+          alternateName: 'Play Polaris',
           description: SITE.description,
           inLanguage: 'en',
         },
@@ -57,28 +54,9 @@ export const Route = createFileRoute('/')({
     }
 
     return {
-      meta: [
-        { title: SITE.title },
-        { name: 'description', content: SITE.description },
-        { name: 'robots', content: 'index, follow, max-image-preview:large' },
-        { property: 'og:type', content: 'website' },
-        { property: 'og:site_name', content: SITE.name },
-        { property: 'og:locale', content: 'en_US' },
-        { property: 'og:title', content: SITE.title },
-        { property: 'og:description', content: SITE.description },
-        { property: 'og:url', content: url },
-        { property: 'og:image', content: image },
-        { property: 'og:image:width', content: '1200' },
-        { property: 'og:image:height', content: '630' },
-        { property: 'og:image:alt', content: imageAlt },
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: SITE.title },
-        { name: 'twitter:description', content: SITE.description },
-        { name: 'twitter:image', content: image },
-        { name: 'twitter:image:alt', content: imageAlt },
-      ],
+      meta,
       links: [
-        { rel: 'canonical', href: url },
+        ...links,
         {
           rel: 'preload',
           as: 'image',

@@ -10,11 +10,11 @@ export const Route = createFileRoute('/builder')({
   ssr: false,
   head: () => ({
     meta: [
-      { title: 'Builder · PlayPolaris' },
+      { title: 'Polaris builder · PlayPolaris' },
       {
         name: 'description',
         content:
-          'Build Shopify App Home screens with Polaris web components, then export HTML or React JSX.',
+          'Build Shopify App Home screens with Polaris web components, then export React JSX or HTML.',
       },
       { name: 'robots', content: 'noindex, follow' },
       { name: 'referrer', content: 'no-referrer' },

@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/solid-router'
+import { CATEGORIES, TEMPLATES } from '../polaris/library'
 import { FAQ, FEATURES, SITE, STEPS } from '../site'
 
 export const Route = createFileRoute('/llms.txt')({
@@ -26,6 +27,16 @@ ${FEATURES.map(f => `- ${f.title}: ${f.body}`).join('\n')}
 ## How it works
 
 ${STEPS.map((s, i) => `${i + 1}. ${s.title}: ${s.body}`).join('\n')}
+
+## Polaris components
+
+${CATEGORIES.map(c => `### ${c.name}\n\n${c.items.map(i => `- ${i.tag}: ${i.blurb}`).join('\n')}`).join('\n\n')}
+
+## Templates
+
+${TEMPLATES.filter(t => t.id !== 'blank')
+  .map(t => `- ${t.name}: ${t.description}`)
+  .join('\n')}
 
 ## FAQ
 

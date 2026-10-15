@@ -1,43 +1,21 @@
-import { Link, createFileRoute } from '@tanstack/solid-router'
-import { onMount } from 'solid-js'
-import { Logo } from '../components/Logo'
-import { ThemeMenu } from '../components/ThemeMenu'
+import { createFileRoute } from '@tanstack/solid-router'
 import { PrivacyChoices } from '../components/PrivacyChoices'
-import { initTheme } from '../editor/theme'
-import { SITE } from '../site'
+import { SiteFooter, SiteHeader } from '../components/SiteChrome'
+import { SITE, pageHead } from '../site'
 import '../components/Home.css'
 import '../components/Privacy.css'
 
 export const Route = createFileRoute('/privacy')({
-  head: () => ({
-    meta: [
-      { title: 'Privacy policy | PlayPolaris' },
-      {
-        name: 'description',
-        content:
-          'How PlayPolaris stores projects, handles shared rooms and analytics, and responds to privacy requests.',
-      },
-      {
-        property: 'og:title',
-        content: 'Privacy policy | PlayPolaris',
-      },
-      {
-        property: 'og:description',
-        content:
-          'How PlayPolaris stores projects, handles shared rooms and analytics, and responds to privacy requests.',
-      },
-      { property: 'og:url', content: `${SITE.url}/privacy` },
-      { property: 'og:type', content: 'website' },
-      { name: 'robots', content: 'index, follow' },
-    ],
-    links: [{ rel: 'canonical', href: `${SITE.url}/privacy` }],
-  }),
+  head: () =>
+    pageHead(
+      '/privacy',
+      'Privacy policy | PlayPolaris',
+      'How PlayPolaris stores projects, handles shared rooms and analytics, and responds to privacy requests.'
+    ),
   component: Privacy,
 })
 
 function Privacy() {
-  onMount(initTheme)
-
   return (
     <div class="home privacy-page">
       <a
@@ -46,27 +24,7 @@ function Privacy() {
       >
         Skip to content
       </a>
-      <header class="home-header">
-        <div class="home-container home-header-inner">
-          <Link
-            to="/"
-            class="home-brand"
-          >
-            <Logo />
-            {SITE.name}
-            <span class="home-brand-mark">/</span>
-          </Link>
-          <div class="home-header-actions">
-            <ThemeMenu />
-            <Link
-              to="/builder"
-              class="home-button home-button-primary"
-            >
-              Open builder
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
 
       <main
         id="main"
@@ -354,27 +312,7 @@ function Privacy() {
         </article>
       </main>
 
-      <footer class="home-footer home-container">
-        <div>
-          <Link
-            to="/"
-            class="home-brand"
-          >
-            <Logo />
-            {SITE.name}
-          </Link>
-        </div>
-        <nav aria-label="Footer">
-          <Link to="/">Home</Link>
-          <Link to="/builder">Builder</Link>
-          <a href={SITE.repository}>GitHub</a>
-          <a href="#analytics">Privacy choices</a>
-        </nav>
-        <p class="home-disclaimer">
-          Independent and open source. Not affiliated with or endorsed by
-          Shopify.
-        </p>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

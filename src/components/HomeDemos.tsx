@@ -1,4 +1,5 @@
 import { For, Show, createSignal } from 'solid-js'
+import { componentName, fileName } from '../editor/names'
 import { isDark } from '../editor/theme'
 import { Icon } from './ui'
 
@@ -7,7 +8,7 @@ const TOUR = [
     title: 'Build visually',
     image: '/builder-screenshot',
     caption:
-      'Find your component. Drop it into place. See your screen take shape.',
+      'Drag a Polaris component into place and watch your Shopify admin screen take shape.',
     alt: 'PlayPolaris visual builder with the Polaris component palette, an app overview screen, and a live property inspector',
     label: 'Your ideas, assembled.',
   },
@@ -122,25 +123,18 @@ export function BuilderShowcase() {
   )
 }
 
-const MARKUP = `<s-page heading="Your next big idea">
-  <s-button slot="primary-action" variant="primary">
-    Make it happen
-  </s-button>
-  <s-section heading="Made for your merchants">
-    <s-paragraph>
-      A little less setup. A lot more possibility.
-    </s-paragraph>
-  </s-section>
-</s-page>`
-
-export function ExportExample() {
+export function ExportExample(props: {
+  markup: string
+  name: string
+  typescript?: boolean
+}) {
   const [format, setFormat] = createSignal<'html' | 'jsx'>('html')
+  const typescript = () => props.typescript ?? true
   const code = () =>
     format() === 'html'
-      ? MARKUP
-      : `/// <reference types="@shopify/polaris-types" />\n\nexport default function AppScreen() {\n  return (\n${MARKUP.split(
-          '\n'
-        )
+      ? props.markup
+      : `${typescript() ? '/// <reference types="@shopify/polaris-types" />\n\n' : ''}export default function ${componentName(props.name)}() {\n  return (\n${props.markup
+          .split('\n')
           .map(line => `    ${line}`)
           .join('\n')}\n  );\n}`
 
@@ -166,11 +160,18 @@ export function ExportExample() {
             React JSX
           </button>
         </div>
-        <span>{format() === 'html' ? 'app-screen.html' : 'AppScreen.tsx'}</span>
+        <span>
+          {fileName(props.name, {
+            format: format(),
+            document: false,
+            appBridge: false,
+            typescript: typescript(),
+          })}
+        </span>
       </div>
       <pre
         role="region"
-        aria-label={`${format() === 'html' ? 'HTML' : 'React JSX'} export example`}
+        aria-label={`${props.name} ${format() === 'html' ? 'HTML' : 'React JSX'} export example`}
         tabIndex={0}
       >
         <code>{code()}</code>

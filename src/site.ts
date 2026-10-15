@@ -4,13 +4,45 @@ export const SITE = {
   name: 'PlayPolaris',
   url: 'https://playpolaris.dev',
   repository: 'https://github.com/djordje-st/play-polaris',
-  title: 'Free Shopify Polaris UI Builder | PlayPolaris',
+  title: 'Shopify Polaris UI Builder & Components Playground | PlayPolaris',
   description:
-    'Build Shopify app UI with real Polaris web components. Drag and drop, preview, collaborate, and export HTML or React JSX. Free, open source, no signup.',
+    'Build Shopify app UI with real Polaris web components. Drag and drop, start from app templates, and export React JSX or HTML. Free, open source, no signup.',
   summary:
-    'A free, open-source visual builder for Shopify App Home interfaces. Build with real Polaris web components, validate layouts, collaborate in shared sessions, work with AI agents over WebMCP, and export HTML or React JSX.',
-  updated: '2026-10-09',
+    'A free, open-source Shopify Polaris playground and UI builder. Compose App Home screens from real Polaris web components, validate nesting and slots, start from app templates, collaborate in shared sessions, work with AI agents over WebMCP, and export React JSX or HTML.',
+  imageAlt:
+    'PlayPolaris, a free Shopify Polaris UI builder, showing a real App Home screen and the component inspector',
+  updated: '2026-10-15',
 } as const
+
+export function pageHead(path: string, title: string, description: string) {
+  const url = `${SITE.url}${path}`
+  const image = `${SITE.url}/og.png`
+
+  return {
+    url,
+    meta: [
+      { title },
+      { name: 'description', content: description },
+      { name: 'robots', content: 'index, follow, max-image-preview:large' },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:site_name', content: SITE.name },
+      { property: 'og:locale', content: 'en_US' },
+      { property: 'og:title', content: title },
+      { property: 'og:description', content: description },
+      { property: 'og:url', content: url },
+      { property: 'og:image', content: image },
+      { property: 'og:image:width', content: '1200' },
+      { property: 'og:image:height', content: '630' },
+      { property: 'og:image:alt', content: SITE.imageAlt },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: title },
+      { name: 'twitter:description', content: description },
+      { name: 'twitter:image', content: image },
+      { name: 'twitter:image:alt', content: SITE.imageAlt },
+    ],
+    links: [{ rel: 'canonical', href: url }],
+  }
+}
 
 export const FEATURES: Array<{
   icon: IconName
@@ -20,61 +52,81 @@ export const FEATURES: Array<{
 }> = [
   {
     icon: 'desktop',
-    title: 'Real Polaris. Real preview.',
-    body: "Build with Shopify's actual web components. Switch between Polaris v1 and v2 RC, and interact with your screen as you go.",
-    detail: 'Shopify runtime · No lookalike components',
+    title: 'Real Polaris web components',
+    body: "Build with Shopify's actual Polaris runtime, not lookalikes. Switch between Polaris v1 and the 2.0 release candidate, and interact with your screen as you go.",
+    detail: 'Shopify CDN runtime · v1 and 2.0 RC',
   },
   {
     icon: 'check',
-    title: 'Guardrails that get it.',
-    body: "Catch invalid nesting, misplaced slots, and accessibility gaps while you build. If something doesn't fit, the checker tells you why.",
+    title: 'Polaris nesting and slot validation',
+    body: "Catch invalid nesting, misplaced slots, bad property values and accessibility gaps while you build. When a drop isn't allowed, the checker says why.",
     detail: 'Live validation · Clear explanations',
   },
   {
     icon: 'blocks',
-    title: 'Less setup. More making.',
-    body: 'Start with a home, index, details, settings, or empty-state layout. Drag from the palette, reorder layers, or add components in place.',
-    detail: 'Starter layouts · Drag and drop',
+    title: 'Shopify app UI templates and drag and drop',
+    body: 'Start from a home, index, details, settings or empty-state template. Drag from the component palette, reorder layers, or add components in place.',
+    detail: '5 starter templates · Drag and drop',
   },
   {
     icon: 'mobile',
-    title: 'See the smaller picture.',
-    body: 'Switch the canvas between desktop, tablet, and mobile sizes. Check how your Shopify app layout adapts before you bring it into your project.',
+    title: 'Responsive preview for desktop, tablet and mobile',
+    body: 'Switch the canvas between viewport sizes and check how your Shopify admin layout adapts before it reaches your codebase.',
     detail: 'Desktop · Tablet · Mobile',
   },
   {
     icon: 'component',
-    title: 'Build once. Use it again.',
-    body: 'Save a useful section as your own component. Drop a copy into any page, then adapt it without changing the original.',
-    detail: 'Reusable components · Independent copies',
+    title: 'Reusable saved components',
+    body: 'Save any section you built as your own component. Drop a copy into any page, then adapt it without changing the original.',
+    detail: 'Save once · Reuse anywhere',
   },
   {
     icon: 'undo',
-    title: 'Room to change your mind.',
-    body: 'Experiment with undo and redo, duplicate pages to explore a direction, and come back to work saved automatically in your browser.',
-    detail: 'Local autosave · Undo and redo',
+    title: 'Undo, redo and local autosave',
+    body: "Experiment freely. Duplicate pages to explore a direction, undo what didn't work, and come back to work saved in your browser.",
+    detail: 'Autosave in IndexedDB · Undo and redo',
   },
 ]
 
 export const STEPS: Array<{ title: string; body: string }> = [
   {
-    title: 'Start from a layout',
-    body: 'Pick a blank page or a common App Home layout: home, index, details, settings or empty state.',
+    title: 'Start from a template',
+    body: 'Pick a blank page or a Shopify App Home template: home, index, details, settings or empty state.',
   },
   {
-    title: 'Build and check',
-    body: 'Add components, edit their properties in the inspector, and fix anything the checker flags.',
+    title: 'Build and validate',
+    body: 'Drag in Polaris components, edit their properties in the inspector, and fix anything the checker flags.',
   },
   {
-    title: 'Export the code',
-    body: 'Download HTML or React JSX and paste it into your Shopify app.',
+    title: 'Export React JSX or HTML',
+    body: 'Download typed React JSX or plain HTML and paste it into your Shopify app.',
   },
 ]
 
 export const FAQ: Array<{ id?: string; q: string; a: string }> = [
   {
     q: 'What is PlayPolaris?',
-    a: 'PlayPolaris is a free, browser-based builder for prototyping Shopify App Home screens with Polaris web components. You arrange real components in a live preview, it checks Polaris nesting rules as you go, and you export the result as HTML or React JSX.',
+    a: "PlayPolaris is a free Shopify Polaris playground and UI builder. You arrange Shopify's real Polaris web components in a live preview, it checks Polaris nesting and slot rules as you go, and you export the screen as React JSX or HTML for your Shopify app.",
+  },
+  {
+    q: 'Which Polaris components can I use?',
+    a: 'All 62 Polaris web components for App Home: page, section, stack, grid and box for layout; text, number, money, date and color fields, selects, checkboxes and switches for forms; tables, badges, banners, modals, popovers, tooltips and more. The components page lists every one with a short example.',
+  },
+  {
+    q: 'Is PlayPolaris a Storybook for Polaris?',
+    a: "Shopify's own Polaris Storybook documents each component on its own. PlayPolaris is a playground for whole pages: compose Polaris components into a Shopify admin screen, validate the result, and export it as React JSX or HTML.",
+  },
+  {
+    q: 'Does it support Polaris 2.0?',
+    a: "Yes. Switch between Polaris web components v1 (polaris-1.js) and the Polaris 2.0 release candidate (polaris-2.0-rc.js), which previews the new Shopify admin design. The component catalog comes from Shopify's official @shopify/polaris-types packages.",
+  },
+  {
+    q: 'Does it work with Polaris React?',
+    a: "PlayPolaris builds with Polaris web components, the s-* elements Shopify recommends for new App Home interfaces, and exports React JSX that uses them with types from @shopify/polaris-types. It doesn't generate code for the older @shopify/polaris React package. Shopify's migration guide covers moving from Polaris React to web components.",
+  },
+  {
+    q: 'Are there Shopify app UI templates?',
+    a: 'Yes. Start a page from a home, index, details, settings or empty-state template built with Polaris web components. Export any of them as HTML or React JSX.',
   },
   {
     q: 'Is it free, and do I need an account?',
@@ -83,10 +135,6 @@ export const FAQ: Array<{ id?: string; q: string; a: string }> = [
   {
     q: 'Is PlayPolaris open source?',
     a: 'Yes. PlayPolaris is released under the MIT License. You can read the source code, report issues, and contribute on GitHub.',
-  },
-  {
-    q: 'Which Polaris versions does it support?',
-    a: "Polaris web components v1 (polaris-1.js) and the 2.0 release candidate (polaris-2.0-rc.js), which shows the new Shopify admin design. You can switch at any time. The component catalog comes from Shopify's official @shopify/polaris-types packages.",
   },
   {
     q: 'Where is my work stored?',

@@ -746,12 +746,14 @@ export const TEMPLATES: Array<{
   id: string
   name: string
   blurb: string
+  description: string
   html: string
 }> = [
   {
     id: 'blank',
     name: 'Blank',
     blurb: 'An empty page to build from scratch',
+    description: 'An empty page with only the page frame.',
     html: /* HTML */ `
       <s-page heading="{name}"></s-page>
     `,
@@ -760,6 +762,8 @@ export const TEMPLATES: Array<{
     id: 'home',
     name: 'Home',
     blurb: 'Setup guide and headline metrics',
+    description:
+      'An app home page with a primary action, an info banner, a setup checklist with a progress bar, and three metric cards in a grid.',
     html: /* HTML */ `
       <s-page heading="{name}">
         <s-button
@@ -846,6 +850,8 @@ export const TEMPLATES: Array<{
     id: 'index',
     name: 'Index',
     blurb: 'A searchable table of resources',
+    description:
+      'A wide resource list with primary and secondary page actions and a data table: search filter, product thumbnails, status badges, inventory and price columns.',
     html: /* HTML */ `
       <s-page
         heading="{name}"
@@ -954,6 +960,8 @@ export const TEMPLATES: Array<{
     id: 'details',
     name: 'Details',
     blurb: 'Edit one resource with a sidebar',
+    description:
+      'An edit page with a breadcrumb, Save and Duplicate actions, title and description fields, a pricing grid of money fields, and an aside with status and organization sections.',
     html: /* HTML */ `
       <s-page heading="{name}">
         <s-link
@@ -1045,6 +1053,8 @@ export const TEMPLATES: Array<{
     id: 'settings',
     name: 'Settings',
     blurb: 'Grouped preferences with a save action',
+    description:
+      'A narrow settings page with store details, a timezone select, notification switches, and a critical delete action.',
     html: /* HTML */ `
       <s-page
         heading="{name}"
@@ -1112,6 +1122,8 @@ export const TEMPLATES: Array<{
     id: 'empty',
     name: 'Empty state',
     blurb: 'First-run page that asks for one action',
+    description:
+      'A first-run page with an illustration, a subheading, and primary and secondary actions.',
     html: /* HTML */ `
       <s-page heading="{name}">
         <s-section>

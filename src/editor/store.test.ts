@@ -3,7 +3,8 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { catalogs, resetEditor, selectedNode } from '../test/editor'
 import { TEMPLATES } from '../polaris/library'
-import { toHTML, exportPage, componentName, fileName } from './codegen'
+import { toHTML, exportPage } from './codegen'
+import { componentName, fileName } from './names'
 import { locate, textOf } from './model'
 import * as store from './store'
 

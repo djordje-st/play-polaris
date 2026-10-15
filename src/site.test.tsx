@@ -5,6 +5,7 @@ import { RouterProvider, createMemoryHistory } from '@tanstack/solid-router'
 import { mount, button } from './test/dom'
 import { getRouter } from './router'
 import { FAQ, FEATURES, SITE } from './site'
+import { CATEGORIES } from './polaris/library'
 import { Route as robots } from './routes/robots[.]txt'
 import { Route as sitemap } from './routes/sitemap[.]xml'
 import { Route as llms } from './routes/llms[.]txt'
@@ -13,6 +14,7 @@ import { Route as documentRoute } from './routes/__root'
 import type { ParentProps } from 'solid-js'
 
 const shell = Reflect.get(documentRoute.options, 'shellComponent')
+const componentCount = CATEGORIES.reduce((n, c) => n + c.items.length, 0)
 
 beforeEach(() => {
   // A DOM mount already has a document; the html/head/body shell belongs to SSR.
@@ -36,7 +38,9 @@ test('homepage renders content, navigation and canonical production metadata', a
   const root = mount(() => <RouterProvider router={router} />)
 
   await vi.waitFor(() =>
-    expect(root.querySelector('h1')?.textContent).toContain('Shopify app UI.')
+    expect(root.querySelector('h1')?.textContent).toContain(
+      'Polaris UI builder'
+    )
   )
   expect(router.options.scrollRestoration).toBe(true)
   expect(router.options.defaultPreload).toBe('intent')
@@ -49,6 +53,9 @@ test('homepage renders content, navigation and canonical production metadata', a
     expect(root.textContent).toContain(item.q)
   }
 
+  expect(root.textContent).toContain(
+    `All ${componentCount} Polaris web components in one visual`
+  )
   expect(root.querySelector('a[href="/builder"]')).not.toBeNull()
   expect(root.querySelector('a[href="/privacy"]')).not.toBeNull()
   expect(root.querySelector('a[href="#main"]')).not.toBeNull()
@@ -165,7 +172,7 @@ test('homepage tour and export examples respond to visitor choices', async () =>
     '<reference types="@shopify/polaris-types" />'
   )
   expect(root.querySelector('pre')?.textContent).toContain(
-    'export default function AppScreen()'
+    'export default function OverviewPage()'
   )
   expect(button('React JSX', root).getAttribute('aria-pressed')).toBe('true')
   expect(button('HTML', root).getAttribute('aria-pressed')).toBe('false')
@@ -181,6 +188,12 @@ test('homepage tour and export examples respond to visitor choices', async () =>
   for (const link of root.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')) {
     expect(root.querySelector(link.getAttribute('href')!)).not.toBeNull()
   }
+})
+
+test('FAQ component count matches the library', () => {
+  expect(
+    FAQ.find(item => item.q === 'Which Polaris components can I use?')?.a
+  ).toContain(`All ${componentCount} Polaris web components`)
 })
 
 test('unknown routes render recovery links', async () => {
@@ -236,7 +249,10 @@ test('privacy policy is rendered with canonical metadata, data practices and val
     rel: 'canonical',
     href: 'https://playpolaris.dev/privacy',
   })
-  expect(page.meta).toContainEqual({ name: 'robots', content: 'index, follow' })
+  expect(page.meta).toContainEqual({
+    name: 'robots',
+    content: 'index, follow, max-image-preview:large',
+  })
 })
 
 test('builder is client-only, noindex, preloads required assets and offers error recovery', async () => {
@@ -325,6 +341,8 @@ test.each([
     } else {
       expect(body).toContain('[Home](https://playpolaris.dev/)')
       expect(body).toContain('[Builder](https://playpolaris.dev/builder)')
+      expect(body).toContain('- s-page:')
+      expect(body).toContain('- Settings:')
       expect(body).toContain(`[Source code](${SITE.repository})`)
       expect(body).toContain(`[License](${SITE.repository}/blob/main/LICENSE)`)
 

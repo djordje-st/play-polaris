@@ -73,7 +73,7 @@ Rooms are limited to 16 connected browsers and 1 MB per synchronization message.
 
 ### Homepage and search
 
-`/` is server-rendered: a product page with an FAQ, canonical and Open Graph tags, and one JSON-LD graph (`WebSite`, `WebApplication`, `FAQPage`). `/builder` renders on the client only and is `noindex`, since its server HTML is an empty shell. `/robots.txt` (with explicit allows for AI crawlers), `/sitemap.xml` and [`/llms.txt`](https://playpolaris.dev/llms.txt) are server routes built from `src/site.ts`. All discovery URLs use `https://playpolaris.dev`, including when served from a preview or alternate host. Structured data and `llms.txt` also link to the source repository and MIT License.
+`/` is server-rendered: a product page with an FAQ, canonical and Open Graph tags, and one JSON-LD graph (`WebSite`, `WebApplication`, `FAQPage`). All public pages share the header and footer in `src/components/SiteChrome.tsx`. `/builder` renders on the client only and is `noindex`, since its server HTML is an empty shell. `/robots.txt` (with explicit allows for AI crawlers), `/sitemap.xml` and [`/llms.txt`](https://playpolaris.dev/llms.txt) are server routes built from `src/site.ts`; `llms.txt` also lists the components and templates from `src/polaris/library.ts`. All discovery URLs use `https://playpolaris.dev`, including when served from a preview or alternate host. Structured data and `llms.txt` also link to the source repository and MIT License.
 
 For a separately hosted fork, update `SITE.url` and `SITE.repository` in `src/site.ts`, plus the links in `package.json` and this README. Local development works without changes; navigation and app assets use relative URLs.
 

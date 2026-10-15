@@ -1,19 +1,26 @@
 import { For, onCleanup, onMount } from 'solid-js'
 import { Link } from '@tanstack/solid-router'
 import { FAQ, FEATURES, SITE, STEPS } from '../site'
-import { initTheme } from '../editor/theme'
 import { BuilderShowcase, ExportExample } from './HomeDemos'
-import { Logo } from './Logo'
-import { ThemeMenu } from './ThemeMenu'
+import { SiteFooter, SiteHeader } from './SiteChrome'
 import { Icon } from './ui'
+
+const MARKUP = `<s-page heading="Your next big idea">
+  <s-button slot="primary-action" variant="primary">
+    Make it happen
+  </s-button>
+  <s-section heading="Made for your merchants">
+    <s-paragraph>
+      A little less setup. A lot more possibility.
+    </s-paragraph>
+  </s-section>
+</s-page>`
 
 export function Home() {
   let page!: HTMLDivElement
   let observer: IntersectionObserver | undefined
 
   onMount(() => {
-    initTheme()
-
     if (!('IntersectionObserver' in window)) {
       return
     }
@@ -46,49 +53,7 @@ export function Home() {
       >
         Skip to content
       </a>
-      <header class="home-header">
-        <div class="home-container home-header-inner">
-          <Link
-            to="/"
-            class="home-brand"
-          >
-            <Logo />
-            {SITE.name}
-            <span class="home-brand-mark">/</span>
-          </Link>
-          <nav
-            aria-label="Main"
-            class="home-nav"
-          >
-            <a href="#features">Features</a>
-            <a href="#how-it-works">How it works</a>
-            <a href="#faq">FAQ</a>
-          </nav>
-          <div class="home-header-actions">
-            <a
-              href={SITE.repository}
-              class="home-github"
-            >
-              GitHub{' '}
-              <Icon
-                name="external"
-                size={13}
-              />
-            </a>
-            <ThemeMenu />
-            <Link
-              to="/builder"
-              class="home-button home-button-primary home-nav-cta"
-            >
-              Open builder{' '}
-              <Icon
-                name="chevronRight"
-                size={15}
-              />
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteHeader />
       <main
         id="main"
         tabIndex={-1}
@@ -101,17 +66,17 @@ export function Home() {
             <div class="home-hero-copy">
               <p class="home-eyebrow">
                 <span class="home-live-dot" />
-                The free Polaris visual builder
+                Free Shopify Polaris playground
               </p>
               <h1 id="hero-title">
-                Shopify app UI.
+                Polaris UI builder
                 <br />
-                <span>From idea to real.</span>
+                <span>for Shopify apps.</span>
               </h1>
               <p class="home-hero-description">
-                Build with real Polaris web components. Drag, refine, and
-                preview your next Shopify app screen. Then take the code with
-                you.
+                Drag and drop Shopify's real Polaris web components, start from
+                App Home templates, and preview on desktop and mobile. Then
+                export React JSX or HTML and paste it into your Shopify app.
               </p>
               <div class="home-hero-actions">
                 <Link
@@ -136,7 +101,7 @@ export function Home() {
                 </a>
               </div>
               <p class="home-hero-footnote">
-                No signup. No installation. Just open and create.
+                Free and open source. No signup. Polaris v1 and 2.0 RC.
               </p>
             </div>
             <BuilderShowcase />
@@ -144,9 +109,9 @@ export function Home() {
         </section>
         <div class="home-platform-strip home-container">
           <p>
-            Made for your
+            Made for
             <br />
-            <strong>Shopify app workflow.</strong>
+            <strong>Shopify app developers.</strong>
           </p>
           <div>
             <Icon
@@ -154,9 +119,9 @@ export function Home() {
               size={20}
             />
             <span>
-              Real Polaris
+              Polaris web components
               <br />
-              <small>v1 + v2 RC</small>
+              <small>v1 + 2.0 RC</small>
             </span>
           </div>
           <div>
@@ -165,9 +130,9 @@ export function Home() {
               size={20}
             />
             <span>
-              HTML & React
+              React JSX & HTML
               <br />
-              <small>Code you can use</small>
+              <small>Typed export</small>
             </span>
           </div>
           <div>
@@ -203,17 +168,17 @@ export function Home() {
             data-reveal
           >
             <div>
-              <p class="home-eyebrow">Less friction. More flow.</p>
+              <p class="home-eyebrow">The Polaris playground</p>
               <h2 id="features-title">
-                Everything clicks
+                Every Polaris component,
                 <br />
-                into place.
+                live in your browser.
               </h2>
             </div>
             <p>
-              A visual Shopify Polaris builder that understands what you're
-              making. Real components, useful guardrails, and room to
-              experiment.
+              All 62 Polaris web components in one visual Shopify app builder,
+              with validation that explains itself and starter templates for
+              common admin pages.
             </p>
           </div>
           <div class="home-feature-grid">
@@ -248,14 +213,16 @@ export function Home() {
               data-reveal
             >
               <div>
-                <p class="home-eyebrow">A shorter path from here to there</p>
-                <h2 id="steps-title">Open. Build. Make it yours.</h2>
+                <p class="home-eyebrow">How it works</p>
+                <h2 id="steps-title">
+                  From Polaris template to exported code in three steps.
+                </h2>
               </div>
               <Link
                 to="/builder"
                 class="home-text-link"
               >
-                Let's build something{' '}
+                Open the Polaris builder{' '}
                 <Icon
                   name="chevronRight"
                   size={18}
@@ -286,21 +253,21 @@ export function Home() {
             class="home-export-copy"
             data-reveal
           >
-            <p class="home-eyebrow">A prototype with somewhere to go</p>
+            <p class="home-eyebrow">Polaris React and HTML export</p>
             <h2 id="export-title">
-              Looks right.
+              Export clean Polaris
               <br />
-              Exports right.
+              React JSX or HTML.
             </h2>
             <p>
-              Your layout becomes readable Polaris markup. Copy a single screen,
-              download a full HTML document, or bring typed React JSX into your
-              app.
+              Your layout becomes the same s-* markup Shopify documents for App
+              Home. Copy one screen, download a full HTML document with the
+              Polaris script tag, or bring typed React JSX into your app.
             </p>
             <ul class="home-check-list">
               <li>
                 <Icon name="check" />
-                HTML or React JSX, with TypeScript support
+                React JSX or TSX typed with @shopify/polaris-types
               </li>
               <li>
                 <Icon name="check" />
@@ -323,7 +290,10 @@ export function Home() {
             </Link>
           </div>
           <div data-reveal>
-            <ExportExample />
+            <ExportExample
+              markup={MARKUP}
+              name="Overview"
+            />
           </div>
         </section>
         <section
@@ -335,8 +305,10 @@ export function Home() {
             data-reveal
           >
             <div>
-              <p class="home-eyebrow">A little company goes a long way</p>
-              <h2 id="together-title">Good ideas travel better together.</h2>
+              <p class="home-eyebrow">Collaboration and AI agents</p>
+              <h2 id="together-title">
+                Build Shopify admin screens together, or with an AI agent.
+              </h2>
             </div>
           </div>
           <div class="home-together-grid">
@@ -385,7 +357,7 @@ export function Home() {
                 </span>
               </div>
               <div class="home-card-copy">
-                <p class="home-eyebrow">Multiplayer, without the meetings</p>
+                <p class="home-eyebrow">Real-time collaboration</p>
                 <h3>Share a link. Build together.</h3>
                 <p>
                   Invite someone into a shared copy of your workspace. Edit the
@@ -445,7 +417,7 @@ export function Home() {
                 </span>
               </div>
               <div class="home-card-copy">
-                <p class="home-eyebrow">Your AI gets a seat at the canvas</p>
+                <p class="home-eyebrow">WebMCP agent tools</p>
                 <h3>Let your agent do the clicking.</h3>
                 <p>
                   With WebMCP, an AI agent can inspect components, build pages,
@@ -472,11 +444,11 @@ export function Home() {
           aria-labelledby="faq-title"
         >
           <div data-reveal>
-            <p class="home-eyebrow">Before you dive in</p>
+            <p class="home-eyebrow">FAQ</p>
             <h2 id="faq-title">
-              A few things
+              Shopify Polaris
               <br />
-              worth knowing.
+              builder FAQ.
             </h2>
             <p>
               Have another question?
@@ -518,13 +490,16 @@ export function Home() {
             class="home-container"
             data-reveal
           >
-            <p class="home-eyebrow">Your next “what if” starts here</p>
+            <p class="home-eyebrow">Free. Open source. No signup.</p>
             <h2 id="cta-title">
-              Less setup.
+              Start building
               <br />
-              More “look what I built.”
+              your Shopify app UI.
             </h2>
-            <p>One browser tab. All the space you need to start.</p>
+            <p>
+              Open the Polaris playground in one browser tab. Nothing to
+              install.
+            </p>
             <Link
               to="/builder"
               class="home-button home-button-white"
@@ -541,37 +516,7 @@ export function Home() {
           </div>
         </section>
       </main>
-      <footer class="home-footer home-container">
-        <div>
-          <Link
-            to="/"
-            class="home-brand"
-          >
-            <Logo />
-            {SITE.name}
-          </Link>
-          <p>A small tool for your next big idea.</p>
-        </div>
-        <nav aria-label="Footer">
-          <Link to="/builder">Builder</Link>
-          <Link to="/privacy">Privacy &amp; choices</Link>
-          <a href={SITE.repository}>GitHub</a>
-          <a href="https://shopify.dev/docs/api/app-home/web-components">
-            Polaris docs
-          </a>
-          <a href="/llms.txt">llms.txt</a>
-        </nav>
-        <p class="home-disclaimer">
-          Independent and open source. Not affiliated with or endorsed by
-          Shopify. Shopify and Polaris are trademarks of Shopify Inc.
-        </p>
-        <a
-          class="home-license"
-          href={`${SITE.repository}/blob/main/LICENSE`}
-        >
-          Made to be shared. MIT licensed.
-        </a>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }

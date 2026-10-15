@@ -838,6 +838,7 @@ html.dark .home {
 }
 .home-footer nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 26px;
   font-size: 12px;
 }
@@ -1143,7 +1144,6 @@ html.dark .home {
     padding-top: 32px;
   }
   .home-footer nav {
-    flex-wrap: wrap;
     gap: 24px;
   }
   .home-license {
