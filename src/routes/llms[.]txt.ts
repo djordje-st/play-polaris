@@ -16,7 +16,7 @@ ${SITE.name} runs in the browser. It loads Shopify's Polaris web components from
 
 - [Home](${SITE.url}/): The official website for ${SITE.name}, with features, workflow, and answers to common questions.
 - [Builder](${SITE.url}/builder): The app itself. Layers and components on the left, a live Polaris preview in the middle, properties on the right.
-- [Privacy policy](${SITE.url}/privacy): Local storage, collaboration, optional analytics, service providers and privacy choices.
+- [Privacy policy](${SITE.url}/privacy): Local storage, collaboration, service providers and privacy rights.
 - [Source code](${SITE.repository}): The open-source repository, issue tracker, and contribution guide.
 - [License](${SITE.repository}/blob/main/LICENSE): MIT License.
 

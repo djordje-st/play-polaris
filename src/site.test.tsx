@@ -236,12 +236,8 @@ test('privacy policy is rendered with canonical metadata, data practices and val
     'Anyone with the room link can read and edit'
   )
   expect(root.textContent).toContain('rooms are not end-to-end encrypted')
-  expect(root.textContent).toContain('Global Privacy Control')
   expect(root.textContent).toContain('This does not clear shared-room copies')
   expect(root.querySelector('main nav')).toBeNull()
-  expect(root.querySelector('.privacy-choices-banner')).toBeNull()
-  expect(button('Allow analytics', root)).not.toBeNull()
-  expect(button('Keep analytics off', root)).not.toBeNull()
 
   const page = router.state.matches.find(match => match.routeId === '/privacy')!
 

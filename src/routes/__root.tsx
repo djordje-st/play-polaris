@@ -5,12 +5,10 @@ import {
   Outlet,
   Scripts,
   createRootRoute,
-  useLocation,
 } from '@tanstack/solid-router'
 import { HydrationScript } from 'solid-js/web'
-import { Show, Suspense } from 'solid-js'
+import { Suspense } from 'solid-js'
 import { THEME_SCRIPT } from '../editor/theme'
-import { PrivacyChoices } from '../components/PrivacyChoices'
 import '../styles.css'
 
 export const Route = createRootRoute({
@@ -67,8 +65,6 @@ function NotFound() {
 }
 
 function RootComponent() {
-  const location = useLocation()
-
   return (
     <html lang="en">
       <head>
@@ -83,10 +79,6 @@ function RootComponent() {
         <Suspense>
           <Outlet />
         </Suspense>
-
-        <Show when={location().pathname !== '/privacy'}>
-          <PrivacyChoices />
-        </Show>
 
         <Scripts />
       </body>

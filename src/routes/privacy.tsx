@@ -1,5 +1,4 @@
 import { createFileRoute } from '@tanstack/solid-router'
-import { PrivacyChoices } from '../components/PrivacyChoices'
 import { SiteFooter, SiteHeader } from '../components/SiteChrome'
 import { SITE, pageHead } from '../site'
 import '../components/Home.css'
@@ -10,7 +9,7 @@ export const Route = createFileRoute('/privacy')({
     pageHead(
       '/privacy',
       'Privacy policy | PlayPolaris',
-      'How PlayPolaris stores projects, handles shared rooms and analytics, and responds to privacy requests.'
+      'How PlayPolaris stores projects, handles shared rooms and responds to privacy requests.'
     ),
   component: Privacy,
 })
@@ -34,7 +33,7 @@ function Privacy() {
         <div class="privacy-intro">
           <h1>Privacy policy</h1>
           <p class="privacy-updated">
-            Last updated <time dateTime="2026-10-09">9 October 2026</time>
+            Last updated <time dateTime="2026-10-22">22 October 2026</time>
           </p>
         </div>
 
@@ -66,8 +65,8 @@ function Privacy() {
             <h2>Data stored in your browser</h2>
             <p>
               Pages, text, saved components, component settings and workspace
-              settings stay in your browser’s IndexedDB storage. Your theme,
-              tour status and analytics choice use local storage. We do not use
+              settings stay in your browser’s IndexedDB storage. Your theme and
+              tour status use local storage. We do not use analytics or
               advertising cookies.
             </p>
             <p>
@@ -115,34 +114,6 @@ function Privacy() {
             </p>
           </section>
 
-          <section id="analytics">
-            <h2>Optional analytics</h2>
-            <p>
-              We use <a href="https://docs.umami.is/docs/faq">Umami</a>, hosted
-              on Railway, to measure page visits. It loads only after you choose
-              “Allow analytics”. The builder works without it.
-            </p>
-            <p>
-              Analytics sends the page path, a fixed page title, referring
-              website origin, browser language and screen size. Umami also
-              receives your IP address and request headers to calculate visit
-              statistics and approximate location. It does not use cookies.
-            </p>
-            <p>
-              We remove URL query strings and fragments, including room keys. We
-              do not send project content, custom events or account IDs. We do
-              not record sessions, track you across websites, sell personal data
-              or share it for targeted advertising.
-            </p>
-            <p>
-              You can turn analytics off below. This stops new events without
-              undoing earlier processing. Do Not Track and Global Privacy
-              Control keep analytics off, even if you previously allowed it.
-              Your choice applies to this browser only.
-            </p>
-            <PrivacyChoices inline />
-          </section>
-
           <section id="providers">
             <h2>Service providers</h2>
             <p>
@@ -155,14 +126,6 @@ function Privacy() {
                 and the shared-room relay. See{' '}
                 <a href="https://www.cloudflare.com/privacypolicy/">
                   Cloudflare’s privacy policy
-                </a>
-                .
-              </li>
-              <li>
-                <strong>Railway:</strong> hosting for our optional Umami
-                analytics service. See{' '}
-                <a href="https://railway.com/legal/privacy">
-                  Railway’s privacy policy
                 </a>
                 .
               </li>
@@ -192,16 +155,15 @@ function Privacy() {
             <p>
               These providers operate internationally, including in the United
               States, so processing may occur outside your country. Cloudflare
-              and Railway describe their use of the EU–US Data Privacy Framework
-              and standard contractual safeguards in the policies linked above.
+              describes its use of the EU–US Data Privacy Framework and standard
+              contractual safeguards in the policies linked above.
             </p>
             <p>
               Where data-protection law requires a legal basis, we rely on
               legitimate interests in providing and securing the site,
-              delivering features you request, and answering messages. Optional
-              analytics uses consent. We may also process or disclose
-              information when necessary to meet a legal obligation or protect
-              rights and security.
+              delivering features you request, and answering messages. We may
+              also process or disclose information when necessary to meet a
+              legal obligation or protect rights and security.
             </p>
           </section>
 
@@ -219,12 +181,6 @@ function Privacy() {
                 Participant copies remain in their browsers until removed.
                 Connection metadata can be handled by the hosting provider
                 separately.
-              </li>
-              <li>
-                <strong>Analytics:</strong> stored in our self-hosted Umami
-                database until deleted by the operator. This application does
-                not configure automatic expiry. Withdrawing consent stops new
-                collection; it does not remove existing records.
               </li>
               <li>
                 <strong>Hosting and security records:</strong> handled under the
@@ -254,8 +210,7 @@ function Privacy() {
             <p>
               Depending on the law that applies, you can ask to access, correct,
               delete, restrict processing of or receive a portable copy of your
-              personal data. You can withdraw analytics consent and still use
-              the builder. We do not make automated decisions with legal or
+              personal data. We do not make automated decisions with legal or
               similarly significant effects on you.
             </p>
             <p>
