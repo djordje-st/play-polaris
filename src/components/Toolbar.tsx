@@ -74,23 +74,16 @@ export function Toolbar(props: {
           onChange={setVersion}
           options={[
             {
+              value: 'v2',
+              label: 'v2',
+              title:
+                'Polaris web components 2.x (polaris-2.js), the new admin design',
+            },
+            {
               value: 'v1',
               label: 'v1',
               title:
-                'Polaris web components 1.x (polaris-1.js), the current admin design',
-            },
-            {
-              value: 'v2',
-              label: (
-                <>
-                  v2{' '}
-                  <span class="rounded bg-warn-soft px-1 text-[10px] leading-4 font-semibold text-warn">
-                    RC
-                  </span>
-                </>
-              ),
-              title:
-                'Polaris 2.0 release candidate (polaris-2.0-rc.js), the new admin design',
+                'Polaris web components 1.x (polaris-1.js), the previous admin design',
             },
           ]}
         />

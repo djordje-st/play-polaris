@@ -163,7 +163,7 @@ test('saves markup and selected nodes with duplicate-name protection', async () 
   await invoke('set_polaris_version', { version: 'v2' })
   expect(editor.state.doc.version).toBe('v2')
   expect((await invoke('get_workspace')).content[0].text).toContain(
-    'release candidate'
+    'polaris-2.js'
   )
 })
 

@@ -82,8 +82,8 @@ importers:
         specifier: npm:@shopify/polaris-types@1.1.0
         version: '@shopify/polaris-types@1.1.0'
       polaris-types-v2:
-        specifier: npm:@shopify/polaris-types@2.0.0-rc.1
-        version: '@shopify/polaris-types@2.0.0-rc.1'
+        specifier: npm:@shopify/polaris-types@2.0.0
+        version: '@shopify/polaris-types@2.0.0'
       prettier:
         specifier: ^3.8.1
         version: 3.9.9
@@ -953,8 +953,8 @@ packages:
   '@shopify/polaris-types@1.1.0':
     resolution: {integrity: sha512-hqd+58XbpsShQmTiMakiUraLL9yjeqcFkaEfiajdxAArQJGREsnNBxY1+cN0egWHFQ7/1Xsqjx0RObd3V0Fy1w==}
 
-  '@shopify/polaris-types@2.0.0-rc.1':
-    resolution: {integrity: sha512-sdqkWjAE43W3N8Vhqtw6DQgbbiEd0TauapeVzox2TnCNQLUrcNr3xbyeFt+x5teFlvSkya0RME3a1gwRKzZ5yQ==}
+  '@shopify/polaris-types@2.0.0':
+    resolution: {integrity: sha512-G1nv58jrTVvR07cBzIybtM66/wFykUyyBab4WSncV08ZmWamPfbs6bv3c0wC4UTDz4f2V0et0HbqLsBH8ZkJCQ==}
 
   '@sindresorhus/is@7.2.0':
     resolution: {integrity: sha512-P1Cz1dWaFfR4IR+U13mqqiGsLFf1KbayybWwdd2vfctdV6hDpUkgCY0nKOLLTMSoRd/jJNjtbqzf13K8DCCXQw==}
@@ -3344,7 +3344,7 @@ snapshots:
 
   '@shopify/polaris-types@1.1.0': {}
 
-  '@shopify/polaris-types@2.0.0-rc.1': {}
+  '@shopify/polaris-types@2.0.0': {}
 
   '@sindresorhus/is@7.2.0': {}
 

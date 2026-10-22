@@ -57,9 +57,9 @@ const STEPS: Array<DriveStep> = [
   {
     element: '[data-tour="version"]',
     popover: {
-      title: 'Polaris v1 or v2',
+      title: 'Polaris v2 or v1',
       description:
-        "Compare today's admin design with the 2.0 release candidate. The same page works in both.",
+        'Compare the new Polaris 2.0 admin design with the previous v1 design. The same page works in both.',
       side: 'bottom',
       align: 'start',
     },

@@ -73,7 +73,7 @@ test('canvas reports CDN load errors and offers retry', () => {
   expect(reload).toHaveBeenCalledOnce()
   expect(iframe.srcdoc).toContain('polaris-1.js')
   store.setVersion('v2')
-  expect(root.querySelector('iframe')!.srcdoc).toContain('polaris-2.0-rc.js')
+  expect(root.querySelector('iframe')!.srcdoc).toContain('polaris-2.js')
 })
 
 test('canvas renders editor changes, switches modes, sizes viewports and blocks preview navigation', () => {

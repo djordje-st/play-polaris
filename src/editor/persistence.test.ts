@@ -150,7 +150,7 @@ test('purges saved and pending work, legacy data and undo, then saves new edits'
 
   expect(fresh).toEqual(store.snapshotOf())
   expect(fresh).toMatchObject({
-    version: 'v1',
+    version: 'v2',
     viewport: 'desktop',
     presets: [],
     pages: [{ name: 'Home', nodes: [] }],

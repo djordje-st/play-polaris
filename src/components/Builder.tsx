@@ -59,8 +59,8 @@ export function Builder() {
     ready()
       ? docVersion()
       : workspace.error
-        ? 'v1'
-        : (workspace()?.version ?? 'v1')
+        ? 'v2'
+        : (workspace()?.version ?? 'v2')
   const [catalog, { refetch }] = createResource(
     () => !workspace.loading && version(),
     loadCatalog

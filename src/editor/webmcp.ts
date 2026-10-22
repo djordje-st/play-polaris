@@ -132,9 +132,7 @@ const TOOLS: Array<
 
       return {
         polarisVersion:
-          s.doc.version === 'v1'
-            ? 'v1 (polaris-1.js)'
-            : 'v2 release candidate (polaris-2.0-rc.js)',
+          s.doc.version === 'v1' ? 'v1 (polaris-1.js)' : 'v2 (polaris-2.js)',
         pages: s.doc.pages.map(p => ({
           id: p.id,
           name: p.name,
@@ -975,7 +973,7 @@ const TOOLS: Array<
     name: 'set_polaris_version',
     title: 'Switch Polaris version',
     description:
-      'Switches the preview between Polaris web components v1 (stable) and v2 (release candidate, new admin design).',
+      'Switches the preview between Polaris web components v1 and v2 (new admin design).',
     inputSchema: {
       type: 'object',
       properties: { version: { type: 'string', enum: ['v1', 'v2'] } },

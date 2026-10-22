@@ -15,7 +15,7 @@ type SavedRoom = Pick<Snapshot, 'pageId' | 'viewport' | 'presets'> & {
 }
 
 const empty: Snapshot = {
-  version: 'v1',
+  version: 'v2',
   pages: [],
   pageId: '',
   viewport: 'desktop',

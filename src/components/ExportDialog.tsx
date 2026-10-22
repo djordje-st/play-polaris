@@ -1,7 +1,11 @@
 import { For, Show, createMemo, createSignal } from 'solid-js'
 import { createStore } from 'solid-js/store'
 import { useSelector } from '@tanstack/solid-store'
-import { POLARIS_SCRIPT, TYPES_PACKAGE } from '../polaris/catalog'
+import {
+  POLARIS_SCRIPT,
+  TYPES_PACKAGE,
+  VERSION_LABEL,
+} from '../polaris/catalog'
 import { generate, tokensToString } from '../editor/codegen'
 import { fileName } from '../editor/names'
 import { editor, notify } from '../editor/store'
@@ -164,7 +168,7 @@ function ExportForm(props: { onClose: () => void; pageId?: string }) {
         onClose={props.onClose}
       >
         Production-ready markup for Polaris web components{' '}
-        {version() === 'v1' ? 'v1' : 'v2 RC'}.
+        {VERSION_LABEL[version()]}.
       </DialogHeader>
 
       <div class="flex h-[min(560px,70vh)]">

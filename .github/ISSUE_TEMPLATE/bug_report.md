@@ -19,7 +19,7 @@ Describe the actual behavior and what you expected instead.
 
 - Browser and version:
 - Operating system:
-- Polaris version (v1 or v2 release candidate):
+- Polaris version (v1 or v2):
 - Hosted URL or local commit:
 
 ## Example or screenshots

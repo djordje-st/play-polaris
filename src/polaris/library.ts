@@ -730,7 +730,7 @@ export function docsUrl(tag: string, version: Version) {
     return null
   }
 
-  return `https://shopify.dev/docs/api/app-home/${version === 'v1' ? 'v1.1' : 'v2.0-rc'}/web-components/${path}`
+  return `https://shopify.dev/docs/api/app-home/${version === 'v1' ? 'v1.1' : 'latest'}/web-components/${path}`
 }
 
 export function presetFor(tag: string) {

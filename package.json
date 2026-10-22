@@ -54,7 +54,7 @@
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.14.5",
     "polaris-types-v1": "npm:@shopify/polaris-types@1.1.0",
-    "polaris-types-v2": "npm:@shopify/polaris-types@2.0.0-rc.1",
+    "polaris-types-v2": "npm:@shopify/polaris-types@2.0.0",
     "prettier": "^3.8.1",
     "typescript": "^6.0.2",
     "vite": "^8.0.0",

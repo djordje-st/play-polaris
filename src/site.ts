@@ -11,7 +11,7 @@ export const SITE = {
     'A free, open-source Shopify Polaris playground and UI builder. Compose App Home screens from real Polaris web components, validate nesting and slots, start from app templates, collaborate in shared sessions, work with AI agents over WebMCP, and export React JSX or HTML.',
   imageAlt:
     'PlayPolaris, a free Shopify Polaris UI builder, showing a real App Home screen and the component inspector',
-  updated: '2026-10-15',
+  updated: '2026-10-22',
 } as const
 
 export function pageHead(path: string, title: string, description: string) {
@@ -53,8 +53,8 @@ export const FEATURES: Array<{
   {
     icon: 'desktop',
     title: 'Real Polaris web components',
-    body: "Build with Shopify's actual Polaris runtime, not lookalikes. Switch between Polaris v1 and the 2.0 release candidate, and interact with your screen as you go.",
-    detail: 'Shopify CDN runtime · v1 and 2.0 RC',
+    body: "Build with Shopify's actual Polaris runtime, not lookalikes. Start on Polaris 2.0, the new admin design, switch to v1 at any time, and interact with your screen as you go.",
+    detail: 'Shopify CDN runtime · 2.0 and v1',
   },
   {
     icon: 'check',
@@ -118,7 +118,7 @@ export const FAQ: Array<{ id?: string; q: string; a: string }> = [
   },
   {
     q: 'Does it support Polaris 2.0?',
-    a: "Yes. Switch between Polaris web components v1 (polaris-1.js) and the Polaris 2.0 release candidate (polaris-2.0-rc.js), which previews the new Shopify admin design. The component catalog comes from Shopify's official @shopify/polaris-types packages.",
+    a: "Yes. Polaris 2.0 (polaris-2.js), which matches the new Shopify admin design, is the default. You can switch to Polaris web components v1 (polaris-1.js) at any time. The component catalog comes from Shopify's official @shopify/polaris-types packages.",
   },
   {
     q: 'Does it work with Polaris React?',

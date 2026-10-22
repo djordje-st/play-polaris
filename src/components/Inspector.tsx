@@ -708,13 +708,6 @@ function PagePanel() {
             </dd>
           </div>
         </dl>
-
-        <Show when={version() === 'v2'}>
-          <p class="mt-2.5 rounded-md bg-warn-soft px-2.5 py-2 text-sm text-warn">
-            The 2.0 release candidate shows the new admin design. It can still
-            change before it's stable.
-          </p>
-        </Show>
       </Section>
     </div>
   )

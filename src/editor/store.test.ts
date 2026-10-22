@@ -278,9 +278,7 @@ test.each(['v1', 'v2'] as const)(
 
     expect(code).toContain('<title>&lt;Title&gt;</title>')
     expect(code).toContain('app-bridge.js')
-    expect(code).toContain(
-      version === 'v1' ? 'polaris-1.js' : 'polaris-2.0-rc.js'
-    )
+    expect(code).toContain(version === 'v1' ? 'polaris-1.js' : 'polaris-2.js')
     expect(
       exportPage(store.currentPage(), version, catalogs[version], {
         ...options,

@@ -109,7 +109,7 @@ export type State = {
 export const editor = createStore<State>({
   ready: false,
   catalog: null,
-  doc: { version: 'v1', pages: [] },
+  doc: { version: 'v2', pages: [] },
   pageId: '',
   selectedId: null,
   hoveredId: null,

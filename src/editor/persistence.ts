@@ -187,7 +187,7 @@ export function purgeWorkspace() {
 
     const page: Page = { id: uid(), name: 'Home', nodes: [] }
     const fresh: Snapshot = {
-      version: 'v1',
+      version: 'v2',
       pages: [page],
       pageId: page.id,
       viewport: 'desktop',

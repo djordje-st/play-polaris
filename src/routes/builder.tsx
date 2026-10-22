@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/solid-router'
-import manifestV1Url from 'polaris-types-v1/custom-elements?url'
+import manifestV2Url from 'polaris-types-v2/custom-elements?url'
 import { Builder } from '../components/Builder'
 import { Button } from '../components/ui'
 import { POLARIS_SCRIPT } from '../polaris/catalog'
@@ -19,20 +19,20 @@ export const Route = createFileRoute('/builder')({
       { name: 'robots', content: 'noindex, follow' },
       { name: 'referrer', content: 'no-referrer' },
     ],
-    // Preload the default v1 assets to avoid waiting on JavaScript and IndexedDB.
+    // Preload the default v2 assets to avoid waiting on JavaScript and IndexedDB.
     // Low priority leaves bandwidth for the app bundle.
 
     links: [
       {
         rel: 'preload',
-        href: manifestV1Url,
+        href: manifestV2Url,
         as: 'fetch',
         crossOrigin: 'anonymous',
         fetchPriority: 'low',
       },
       {
         rel: 'preload',
-        href: POLARIS_SCRIPT.v1,
+        href: POLARIS_SCRIPT.v2,
         as: 'script',
         fetchPriority: 'low',
       },

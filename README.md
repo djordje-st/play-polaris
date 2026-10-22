@@ -10,7 +10,7 @@ This is an independent project, not made or endorsed by Shopify.
 
 ## Features
 
-- **Live preview with the real runtime.** The canvas is an iframe that loads Shopify's own `polaris-1.js` (v1) or `polaris-2.0-rc.js` (v2 release candidate, the new admin design). Switch versions at any time to compare them.
+- **Live preview with the real runtime.** The canvas is an iframe that loads Shopify's own `polaris-2.js` (v2, the new admin design, used by default) or `polaris-1.js` (v1). Switch versions at any time to compare them.
 - **Drag and drop.** Built on [dnd-kit](https://dndkit.com). Drag from the component palette, the layers tree or the preview itself. Drop targets know about slots, row and column layouts, and slot capacity. Invalid drops are refused with the reason.
 - **Add between elements.** Hover the gap between two layers, or use the add buttons on a hovered element in the preview, to open a component picker. It only lists components that are allowed at that spot. At the end of a nested group, the pointer's horizontal position picks how deep the new component goes. Clicking an empty container's placeholder adds into it.
 - **Validation.** Checks allowed parents, slot contents (for example `primary-action` takes one primary button), property values, duplicate ids, broken `commandFor`/`interestFor` links and accessibility basics. Problems appear in the tree, the inspector and the status bar.

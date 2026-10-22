@@ -101,7 +101,7 @@ export function Home() {
                 </a>
               </div>
               <p class="home-hero-footnote">
-                Free and open source. No signup. Polaris v1 and 2.0 RC.
+                Free and open source. No signup. Polaris v2 and v1.
               </p>
             </div>
             <BuilderShowcase />
@@ -121,7 +121,7 @@ export function Home() {
             <span>
               Polaris web components
               <br />
-              <small>v1 + 2.0 RC</small>
+              <small>v2 + v1</small>
             </span>
           </div>
           <div>

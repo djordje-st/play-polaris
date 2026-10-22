@@ -260,7 +260,7 @@ test('restores saved version and viewport and reloads catalog after version chan
   expect(store.catalog().version).toBe('v2')
   expect(store.currentPage().name).toBe('Saved page')
   expect(store.editor.state.viewport).toBe('mobile')
-  expect(root.querySelector('iframe')!.srcdoc).toContain('polaris-2.0-rc.js')
+  expect(root.querySelector('iframe')!.srcdoc).toContain('polaris-2.js')
   store.setVersion('v1')
   await vi.waitFor(() => expect(store.catalog().version).toBe('v1'))
   expect(persistence.startSession).toHaveBeenCalledOnce()

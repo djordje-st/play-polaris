@@ -2,15 +2,15 @@ import type { Version } from '../editor/model.ts'
 
 export const POLARIS_SCRIPT: Record<Version, string> = {
   v1: 'https://cdn.shopify.com/shopifycloud/polaris-1.js',
-  v2: 'https://cdn.shopify.com/shopifycloud/polaris-2.0-rc.js',
+  v2: 'https://cdn.shopify.com/shopifycloud/polaris-2.js',
 }
 
 export const TYPES_PACKAGE: Record<Version, string> = {
   v1: '@shopify/polaris-types@1.1.0',
-  v2: '@shopify/polaris-types@2.0.0-rc.1',
+  v2: '@shopify/polaris-types@2.0.0',
 }
 
-export const VERSION_LABEL: Record<Version, string> = { v1: 'v1', v2: 'v2 RC' }
+export const VERSION_LABEL: Record<Version, string> = { v1: 'v1', v2: 'v2' }
 
 export type PropKind = 'enum' | 'boolean' | 'number' | 'string'
 
