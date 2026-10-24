@@ -113,7 +113,7 @@ test('tour starts once, records completion, and can be restarted manually', asyn
     onDestroyed: () => void
   }
 
-  expect(config.steps).toHaveLength(7)
+  expect(config.steps).toHaveLength(8)
   config.onDestroyed()
   expect(localStorage.getItem('polaris-playground:tour-seen')).toBe('1')
   await startTour()

@@ -318,7 +318,7 @@ test('late WebMCP initialization retries and registers tools', async () => {
 
   try {
     await vi.advanceTimersByTimeAsync(1500)
-    expect(context.registerTool).toHaveBeenCalledTimes(27)
+    expect(context.registerTool).toHaveBeenCalledTimes(29)
   } finally {
     Reflect.deleteProperty(document, 'modelContext')
   }

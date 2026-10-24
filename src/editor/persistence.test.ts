@@ -79,7 +79,8 @@ test('starts empty, saves a workspace and persists only changed rows', async () 
   store.renamePage(original.id, 'Saved name')
   expect(store.editor.state.saveState).toBe('saving')
   await save()
-  expect(put).toHaveBeenCalledTimes(1)
+  // The page row and the project row, whose edit time changed.
+  expect(put).toHaveBeenCalledTimes(2)
   expect((await persistence.loadWorkspace())?.pages[0]?.name).toBe('Saved name')
   put.mockClear()
   store.select(original.nodes[0]!.id)
@@ -109,7 +110,7 @@ test('deletes page and preset rows and restores the remaining order', async () =
   await save()
 
   const snapshot = await persistence.loadWorkspace()
-  const db = await request(indexedDB.open('polaris-playground-data', 10))
+  const db = await request(indexedDB.open('polaris-playground-data', 11))
 
   expect(snapshot?.pages.map(page => page.id)).toEqual([second.id])
   expect(snapshot?.presets).toEqual([])
@@ -146,7 +147,7 @@ test('purges saved and pending work, legacy data and undo, then saves new edits'
   dispatchEvent(new Event('pagehide'))
 
   const fresh = await persistence.loadWorkspace()
-  const db = await request(indexedDB.open('polaris-playground-data', 10))
+  const db = await request(indexedDB.open('polaris-playground-data', 11))
 
   expect(fresh).toEqual(store.snapshotOf())
   expect(fresh).toMatchObject({
@@ -322,7 +323,7 @@ test('a waiting tab mirrors saves and purges before becoming editor', async () =
     new MessageEvent('message', { data: { type: 'saved' } })
   )
 
-  const db = await request(indexedDB.open('polaris-playground-data', 10))
+  const db = await request(indexedDB.open('polaris-playground-data', 11))
 
   await request(
     db
@@ -372,7 +373,7 @@ test('visibility changes flush pending edits and unchanged flushes avoid writes'
 
 test('a failed database open can retry after the incompatible database is removed', async () => {
   const incompatible = await request(
-    indexedDB.open('polaris-playground-data', 11)
+    indexedDB.open('polaris-playground-data', 12)
   )
 
   incompatible.close()
@@ -432,4 +433,92 @@ test('takeover requests a flush before stealing the lock', async () => {
     expect.any(Function)
   )
   expect(store.editor.state.access).toBe('editing')
+})
+
+test('moves a workspace saved before projects into a default project', async () => {
+  const old = await new Promise<IDBDatabase>((resolve, reject) => {
+    const open = indexedDB.open('polaris-playground-data', 10)
+
+    open.onupgradeneeded = () => {
+      for (const name of ['pages', 'presets', 'meta']) {
+        open.result.createObjectStore(name, { keyPath: 'id' })
+      }
+    }
+
+    open.onsuccess = () => resolve(open.result)
+    open.onerror = () => reject(open.error)
+  })
+  const page = { id: 'old-page', name: 'Old page', nodes: [] }
+  const tx = old.transaction(['pages', 'meta'], 'readwrite')
+
+  tx.objectStore('pages').put(page)
+  tx.objectStore('meta').put({
+    id: 'workspace',
+    version: 'v1',
+    pageOrder: [page.id],
+    pageId: page.id,
+    viewport: 'tablet',
+  })
+  await new Promise(resolve => (tx.oncomplete = resolve))
+  old.close()
+
+  const saved = await persistence.loadWorkspace()
+
+  expect(saved).toMatchObject({
+    version: 'v1',
+    pages: [page],
+    viewport: 'tablet',
+    projectId: 'default',
+    projects: [{ id: 'default', name: 'Default', pages: [page] }],
+  })
+  store.initWorkspace(saved, catalogs.v1)
+  await start()
+
+  const db = await request(indexedDB.open('polaris-playground-data', 11))
+
+  expect(
+    await request(db.transaction('meta').objectStore('meta').get('workspace'))
+  ).toEqual({ id: 'workspace', projectId: 'default', viewport: 'tablet' })
+  expect(
+    await request(
+      db.transaction('projects').objectStore('projects').get('default')
+    )
+  ).toMatchObject({ name: 'Default', pageOrder: [page.id] })
+  db.close()
+})
+
+test('saves every project, reopens the last one and prunes deleted projects', async () => {
+  await start()
+
+  const first = store.currentProject()!
+  const second = store.createProject({
+    name: 'Second',
+    version: 'v2',
+    template: 'blank',
+  })!
+
+  await save()
+
+  const reloaded = await persistence.loadWorkspace()
+
+  expect(reloaded?.projectId).toBe(second.id)
+  expect(reloaded?.pages).toEqual(second.pages)
+  expect(reloaded?.projects?.map(p => p.name)).toEqual(['Default', 'Second'])
+  expect(reloaded?.projects?.[0]?.pages).toEqual(first.pages)
+
+  store.deleteProject(second.id)
+  await save()
+
+  const db = await request(indexedDB.open('polaris-playground-data', 11))
+
+  expect(
+    await request(db.transaction('pages').objectStore('pages').getAllKeys())
+  ).toEqual(first.pages.map(p => p.id))
+  expect(
+    await request(
+      db.transaction('projects').objectStore('projects').getAllKeys()
+    )
+  ).toEqual([first.id])
+  db.close()
+  expect((await persistence.loadWorkspace())?.projectId).toBe(first.id)
 })

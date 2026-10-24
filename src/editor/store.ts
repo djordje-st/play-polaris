@@ -76,11 +76,24 @@ export type Preset = {
   createdAt: number
 }
 
+/** For the open project, `version`, `pages` and `pageId` mirror the editor. */
+export type Project = {
+  id: string
+  name: string
+  version: Version
+  pages: Array<Page>
+  pageId: string
+  createdAt: number
+  updatedAt: number
+}
+
 export type State = {
   ready: boolean
   catalog: Catalog | null
   doc: Doc
   pageId: string
+  projects: Array<Project>
+  projectId: string
   selectedId: string | null
   hoveredId: string | null
   mode: Mode
@@ -111,6 +124,8 @@ export const editor = createStore<State>({
   catalog: null,
   doc: { version: 'v2', pages: [] },
   pageId: '',
+  projects: [],
+  projectId: '',
   selectedId: null,
   hoveredId: null,
   mode: 'design',
@@ -136,12 +151,39 @@ import.meta.hot?.accept(() => location.reload())
 
 const S = () => editor.state
 
+// Keeping the open project's entry in step with the document lets saves and
+// the project switcher read every project from one list.
+function sync(s: State): State {
+  const open = s.projects.find(p => p.id === s.projectId)
+
+  if (!open) {
+    return s
+  }
+
+  const { version, pages } = s.doc
+  const edited = open.pages !== pages || open.version !== version
+
+  if (!edited && open.pageId === s.pageId) {
+    return s
+  }
+
+  const next: Project = {
+    ...open,
+    version,
+    pages,
+    pageId: s.pageId,
+    updatedAt: edited ? Date.now() : open.updatedAt,
+  }
+
+  return { ...s, projects: s.projects.map(p => (p === open ? next : p)) }
+}
+
 // Batch selector updates so memos never observe a mix of old and new state.
 const update = (recipe: (s: State) => State) =>
-  batch(() => editor.setState(recipe))
+  batch(() => editor.setState(s => sync(recipe(s))))
 const patch = (p: Partial<State>) => update(s => ({ ...s, ...p }))
 
-// A workspace always has at least one page: deletePage refuses the last one.
+// A project always has at least one page: deletePage refuses the last one.
 export const currentPage = (s: State = S()): Page =>
   s.doc.pages.find(p => p.id === s.pageId) ?? s.doc.pages[0]!
 
@@ -181,12 +223,18 @@ export async function loadCatalog(version: Version) {
   ))
 }
 
+/**
+ * `version`, `pages` and `pageId` describe the open project. Shared rooms
+ * have no project list; personal workspaces always do.
+ */
 export type Snapshot = {
   version: Version
   pages: Array<Page>
   pageId: string
   viewport: Viewport
   presets: Array<Preset>
+  projectId?: string
+  projects?: Array<Project>
 }
 
 export const snapshotOf = (s: State = S()): Snapshot => ({
@@ -195,7 +243,47 @@ export const snapshotOf = (s: State = S()): Snapshot => ({
   pageId: s.pageId,
   viewport: s.viewport,
   presets: s.presets,
+  projectId: s.projectId,
+  projects: s.projects,
 })
+
+export const DEFAULT_PROJECT = 'Default'
+
+export function newProject(
+  name: string,
+  version: Version,
+  pages: Array<Page>
+): Project {
+  const now = Date.now()
+
+  return {
+    id: uid(),
+    name,
+    version,
+    pages,
+    pageId: pages[0]!.id,
+    createdAt: now,
+    updatedAt: now,
+  }
+}
+
+/** A workspace holding just `project`. */
+export const workspaceOf = (
+  project: Project,
+  viewport: Viewport = 'desktop',
+  presets: Array<Preset> = []
+): Snapshot => ({
+  version: project.version,
+  pages: project.pages,
+  pageId: project.pageId,
+  viewport,
+  presets,
+  projectId: project.id,
+  projects: [project],
+})
+
+// Each project keeps its own undo history while another one is open.
+const histories = new Map<string, Pick<State, 'past' | 'future'>>()
 
 export function initWorkspace(saved: Snapshot | null, c: Catalog) {
   const pages = saved?.pages.length
@@ -205,11 +293,20 @@ export function initWorkspace(saved: Snapshot | null, c: Catalog) {
     saved && pages.some(p => p.id === saved.pageId)
       ? saved.pageId
       : pages[0]!.id
+  const version = saved?.version ?? c.version
+  const projects = saved?.projects?.length
+    ? saved.projects
+    : [newProject(DEFAULT_PROJECT, version, pages)]
 
+  histories.clear()
   patch({
     ready: true,
-    doc: { version: saved?.version ?? c.version, pages },
+    doc: { version, pages },
     pageId,
+    projects,
+    projectId: projects.some(p => p.id === saved?.projectId)
+      ? saved!.projectId!
+      : projects[0]!.id,
     viewport: saved?.viewport ?? 'desktop',
     presets: saved?.presets ?? [],
   })
@@ -221,14 +318,21 @@ export function applySnapshot(snap: Snapshot) {
     return
   }
 
+  const sameProject = !snap.projectId || snap.projectId === S().projectId
+
+  histories.clear()
   update(s =>
     settle({
       ...s,
       doc: { version: snap.version, pages: snap.pages },
       presets: snap.presets,
       viewport: snap.viewport,
-
-      pageId: snap.pages.some(p => p.id === s.pageId) ? s.pageId : snap.pageId,
+      projects: snap.projects ?? s.projects,
+      projectId: snap.projectId ?? s.projectId,
+      pageId:
+        sameProject && snap.pages.some(p => p.id === s.pageId)
+          ? s.pageId
+          : snap.pageId,
       past: [],
       future: [],
       lastKey: null,
@@ -688,8 +792,8 @@ export function fromTemplate(
   return parseHTML(tpl.html.replaceAll('{name}', escapeAttr(name)), c).nodes
 }
 
-export function uniquePageName(base: string) {
-  const names = new Set(S().doc.pages.map(p => p.name.toLowerCase()))
+function uniqueName(base: string, taken: Array<{ name: string }>) {
+  const names = new Set(taken.map(t => t.name.toLowerCase()))
 
   if (!names.has(base.toLowerCase())) {
     return base
@@ -703,6 +807,9 @@ export function uniquePageName(base: string) {
 
   return `${base} ${i}`
 }
+
+export const uniquePageName = (base: string, pages = S().doc.pages) =>
+  uniqueName(base, pages)
 
 export function addPage(name: string, nodes: Array<TreeNode>) {
   const page: Page = { id: uid(), name, nodes }
@@ -756,7 +863,7 @@ export function deletePage(pageId: string) {
   const pages = S().doc.pages
 
   if (pages.length < 2) {
-    return notify('A workspace needs at least one page', 'critical')
+    return notify('A project needs at least one page', 'critical')
   }
 
   const i = pages.findIndex(p => p.id === pageId)
@@ -774,21 +881,7 @@ export const presetTags = (p: Preset) =>
 
 export const findPreset = (id: string) => S().presets.find(p => p.id === id)
 
-export function uniquePresetName(base: string) {
-  const names = new Set(S().presets.map(p => p.name.toLowerCase()))
-
-  if (!names.has(base.toLowerCase())) {
-    return base
-  }
-
-  let i = 2
-
-  while (names.has(`${base} ${i}`.toLowerCase())) {
-    i++
-  }
-
-  return `${base} ${i}`
-}
+export const uniquePresetName = (base: string) => uniqueName(base, S().presets)
 
 /** Placement is decided where the copy lands, so a root's slot isn't kept. */
 const snapshot = (nodes: Array<TreeNode>) =>
@@ -875,5 +968,164 @@ export function insertPreset(id: string, at?: Target) {
     preset.nodes,
     target as Target,
     preset.nodes.find(n => !isText(n))?.id
+  )
+}
+
+export const uniqueProjectName = (base: string) =>
+  uniqueName(base, S().projects)
+
+export const currentProject = (s: State = S()) =>
+  s.projects.find(p => p.id === s.projectId)
+
+export function openProject(id: string) {
+  const s = S()
+  const project = s.projects.find(p => p.id === id)
+
+  if (!project || id === s.projectId || !canEdit()) {
+    return
+  }
+
+  histories.set(s.projectId, { past: s.past, future: s.future })
+
+  const history = histories.get(id) ?? { past: [], future: [] }
+
+  histories.delete(id)
+  update(state => ({
+    ...state,
+    ...history,
+    projectId: id,
+    doc: { version: project.version, pages: project.pages },
+    pageId: project.pageId,
+    selectedId: null,
+    hoveredId: null,
+    inserting: null,
+    drag: null,
+    lastKey: null,
+  }))
+}
+
+export function createProject(input: {
+  name: string
+  version: Version
+  template: string
+}) {
+  if (!canEdit()) {
+    return null
+  }
+
+  // Templates use components from both versions, so any catalog parses them.
+  const project = newProject(input.name, input.version, [
+    {
+      id: uid(),
+      name: 'Home',
+      nodes: fromTemplate(input.template, 'Home'),
+    },
+  ])
+
+  patch({ projects: [...S().projects, project] })
+  openProject(project.id)
+
+  return project
+}
+
+export function renameProject(id: string, name: string) {
+  if (!canEdit()) {
+    return
+  }
+
+  patch({
+    projects: S().projects.map(p =>
+      p.id === id ? { ...p, name, updatedAt: Date.now() } : p
+    ),
+  })
+}
+
+export function duplicateProject(id: string) {
+  const src = S().projects.find(p => p.id === id)
+
+  if (!src || !canEdit()) {
+    return null
+  }
+
+  const pages = src.pages.map(p => ({
+    id: uid(),
+    name: p.name,
+    nodes: cloneFresh(p.nodes, new Set()),
+  }))
+  const open = pages[src.pages.findIndex(p => p.id === src.pageId)]
+  const copy = {
+    ...newProject(uniqueProjectName(`${src.name} copy`), src.version, pages),
+    pageId: (open ?? pages[0]!).id,
+  }
+  const projects = [...S().projects]
+
+  projects.splice(projects.indexOf(src) + 1, 0, copy)
+  patch({ projects })
+  openProject(copy.id)
+
+  return copy
+}
+
+export function deleteProject(id: string) {
+  const projects = S().projects
+  const i = projects.findIndex(p => p.id === id)
+
+  if (i < 0 || !canEdit()) {
+    return
+  }
+
+  if (projects.length < 2) {
+    return notify('You need at least one project', 'critical')
+  }
+
+  if (id === S().projectId) {
+    openProject((projects[i + 1] ?? projects[i - 1])!.id)
+  }
+
+  histories.delete(id)
+  patch({ projects: S().projects.filter(p => p.id !== id) })
+}
+
+/** Copies a page into another project with fresh ids; `moving` also removes it here. */
+export function sendPage(pageId: string, projectId: string, moving = false) {
+  const page = S().doc.pages.find(p => p.id === pageId)
+  const target = S().projects.find(p => p.id === projectId)
+
+  if (!page || !target || projectId === S().projectId || !canEdit()) {
+    return
+  }
+
+  if (moving && S().doc.pages.length < 2) {
+    return notify('A project needs at least one page', 'critical')
+  }
+
+  const copy: Page = {
+    id: uid(),
+    name: uniquePageName(page.name, target.pages),
+    nodes: cloneFresh(page.nodes, new Set()),
+  }
+
+  patch({
+    projects: S().projects.map(p =>
+      p === target
+        ? { ...p, pages: [...p.pages, copy], updatedAt: Date.now() }
+        : p
+    ),
+  })
+
+  if (moving) {
+    deletePage(pageId)
+  }
+
+  notify(
+    `${moving ? 'Moved' : 'Copied'} “${page.name}” to ${target.name}`,
+    'neutral',
+    {
+      label: 'Open',
+      run: () => {
+        openProject(projectId)
+        openPage(copy.id)
+      },
+    }
   )
 }

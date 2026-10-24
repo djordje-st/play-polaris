@@ -7,8 +7,8 @@ import {
   VERSION_LABEL,
 } from '../polaris/catalog'
 import { generate, tokensToString } from '../editor/codegen'
-import { fileName } from '../editor/names'
-import { editor, notify } from '../editor/store'
+import { fileName, slug } from '../editor/names'
+import { currentProject, editor, notify } from '../editor/store'
 import { Button, Dialog, DialogHeader, Icon, Segmented } from './ui'
 import type { ExportOptions, Token, TokenKind } from '../editor/codegen'
 
@@ -150,7 +150,7 @@ function ExportForm(props: { onClose: () => void; pageId?: string }) {
     )
 
     save(
-      'polaris-pages.zip',
+      `${slug(currentProject()?.name ?? '', 'polaris')}-pages.zip`,
       new Blob([zip.slice()], { type: 'application/zip' })
     )
     notify(`Downloaded ${list.length} pages`)

@@ -12,6 +12,16 @@ const STEPS: Array<DriveStep> = [
     },
   },
   {
+    element: '[data-tour="project"]',
+    popover: {
+      title: 'Projects',
+      description:
+        'Keep each app or idea in its own project, with its own pages and Polaris version. Switch, create, duplicate or rename projects here.',
+      side: 'bottom',
+      align: 'start',
+    },
+  },
+  {
     element: '[data-tour="pages"]',
     popover: {
       title: 'Pages',
@@ -59,7 +69,7 @@ const STEPS: Array<DriveStep> = [
     popover: {
       title: 'Polaris v2 or v1',
       description:
-        'Compare the new Polaris 2.0 admin design with the previous v1 design. The same page works in both.',
+        'Compare the new Polaris 2.0 admin design with the previous v1 design. Each project remembers its version, and the same page works in both.',
       side: 'bottom',
       align: 'start',
     },

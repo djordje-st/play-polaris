@@ -305,9 +305,15 @@ test('toolbar controls mode, version, viewport, history, save state and export',
   store.logAgent('Failed tool', 'Error', false)
   expect(root.textContent).toContain('Recent activity')
   button('Export', root).click()
-  expect(root.querySelector('dialog')?.open).toBe(true)
+  expect(
+    root.querySelector<HTMLDialogElement>('dialog[aria-label="Export code"]')
+      ?.open
+  ).toBe(true)
   button('Close', root).click()
-  expect(root.querySelector('dialog')?.open).toBe(false)
+  expect(
+    root.querySelector<HTMLDialogElement>('dialog[aria-label="Export code"]')
+      ?.open
+  ).toBe(false)
 })
 
 test('sidebar creates pages, selects layers and inserts searched components', async () => {
@@ -465,7 +471,7 @@ test('export downloads HTML, untyped JSX and a ZIP containing every selected pag
     root.querySelector('[aria-label="Code preview"]')?.textContent
   ).toContain('Second')
   submit(root)
-  await vi.waitFor(() => expect(downloads[2]).toBe('polaris-pages.zip'))
+  await vi.waitFor(() => expect(downloads[2]).toBe('default-pages.zip'))
 
   const archive = unzipSync(new Uint8Array(await blobs[2]!.arrayBuffer()))
 
