@@ -17,6 +17,7 @@ import { purgeWorkspace } from '../editor/persistence'
 import { modKey, shortcutList } from '../editor/shortcuts'
 import { ExportDialog } from './ExportDialog'
 import { Logo } from './Logo'
+import { ProjectSwitcher } from './Projects'
 import { ThemeMenu } from './ThemeMenu'
 import { startTour } from './tour'
 import { Button, Icon, IconButton, Kbd, Popover, Segmented } from './ui'
@@ -38,7 +39,7 @@ export function Toolbar(props: {
   const clearData = async () => {
     if (
       !window.confirm(
-        'Delete all pages, saved components, and workspace settings from this browser? This cannot be undone. Export any work you want to keep first.'
+        'Delete all projects, pages, saved components, and workspace settings from this browser? This cannot be undone. Export any work you want to keep first.'
       )
     ) {
       return
@@ -66,6 +67,17 @@ export function Toolbar(props: {
 
         <span class="font-semibold whitespace-nowrap">PlayPolaris</span>
       </div>
+
+      <Show when={!room()}>
+        <span
+          class="-mx-2 text-ink-3"
+          aria-hidden="true"
+        >
+          /
+        </span>
+
+        <ProjectSwitcher />
+      </Show>
 
       <div data-tour="version">
         <Segmented
@@ -396,7 +408,7 @@ function Collaboration(props: { onLeave?: () => Promise<void> }) {
             <>
               <p class="font-semibold">Edit together</p>
               <p class="mt-1 mb-3 text-sm text-ink-2">
-                Start a shared copy of your pages. Your personal workspace stays
+                Start a shared copy of this project's pages. Your projects stay
                 here. Anyone with the link can edit.
               </p>
               <Button

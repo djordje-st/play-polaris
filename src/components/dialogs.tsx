@@ -127,38 +127,10 @@ function NewPageForm(props: { onClose: () => void }) {
           />
         </Field>
 
-        <fieldset>
-          <legend class="mb-1 text-sm font-medium text-ink-2">
-            Start from
-          </legend>
-
-          <div class="grid grid-cols-3 gap-2">
-            <For each={TEMPLATES}>
-              {t => (
-                <label
-                  class={`cursor-pointer rounded-lg border px-3 py-2.5 transition-colors ${
-                    template() === t.id
-                      ? 'border-accent bg-accent-soft shadow-[0_0_0_1px_var(--color-accent)]'
-                      : 'border-line hover:border-line-strong'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="template"
-                    class="sr-only"
-                    value={t.id}
-                    checked={template() === t.id}
-                    onChange={() => setTemplate(t.id)}
-                  />
-
-                  <span class="block font-medium">{t.name}</span>
-
-                  <span class="block text-xs text-ink-3">{t.blurb}</span>
-                </label>
-              )}
-            </For>
-          </div>
-        </fieldset>
+        <TemplatePicker
+          value={template()}
+          onChange={setTemplate}
+        />
       </div>
 
       <footer class="flex justify-end gap-2 border-t border-line px-5 py-3">
@@ -173,6 +145,44 @@ function NewPageForm(props: { onClose: () => void }) {
         </Button>
       </footer>
     </form>
+  )
+}
+
+export function TemplatePicker(props: {
+  value: string
+  onChange: (id: string) => void
+}) {
+  return (
+    <fieldset>
+      <legend class="mb-1 text-sm font-medium text-ink-2">Start from</legend>
+
+      <div class="grid grid-cols-3 gap-2">
+        <For each={TEMPLATES}>
+          {t => (
+            <label
+              class={`cursor-pointer rounded-lg border px-3 py-2.5 transition-colors ${
+                props.value === t.id
+                  ? 'border-accent bg-accent-soft shadow-[0_0_0_1px_var(--color-accent)]'
+                  : 'border-line hover:border-line-strong'
+              }`}
+            >
+              <input
+                type="radio"
+                name="template"
+                class="sr-only"
+                value={t.id}
+                checked={props.value === t.id}
+                onChange={() => props.onChange(t.id)}
+              />
+
+              <span class="block font-medium">{t.name}</span>
+
+              <span class="block text-xs text-ink-3">{t.blurb}</span>
+            </label>
+          )}
+        </For>
+      </div>
+    </fieldset>
   )
 }
 

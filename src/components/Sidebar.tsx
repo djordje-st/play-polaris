@@ -20,6 +20,7 @@ import {
 import { iconFor, Tree } from './Tree'
 import { ImportDialog, NewPageDialog, SavePresetDialog } from './dialogs'
 import { ExportDialog } from './ExportDialog'
+import { SendPageDialog } from './Projects'
 import { Button, Icon, IconButton, Menu, Segmented } from './ui'
 import type { DragData } from '../editor/dnd'
 import type { Page } from '../editor/model'
@@ -116,7 +117,12 @@ export function Sidebar() {
 function Pages() {
   const pages = useSelector(editor, s => s.doc.pages)
   const pageId = useSelector(editor, s => s.pageId)
+  const hasOtherProjects = useSelector(
+    editor,
+    s => !s.room && s.projects.length > 1
+  )
   const [creating, setCreating] = createSignal(false)
+  const [sending, setSending] = createSignal<string | null>(null)
   const [exporting, setExporting] = createSignal<string | null>(null)
   const [editing, setEditing] = createSignal<string | null>(null)
 
@@ -151,6 +157,9 @@ function Pages() {
               editing={editing() === page.id}
               onEdit={on => setEditing(on ? page.id : null)}
               onExport={() => setExporting(page.id)}
+              onSend={
+                hasOtherProjects() ? () => setSending(page.id) : undefined
+              }
               canDelete={pages().length > 1}
             />
           )}
@@ -167,6 +176,11 @@ function Pages() {
         pageId={exporting() ?? undefined}
         onClose={() => setExporting(null)}
       />
+
+      <SendPageDialog
+        pageId={sending()}
+        onClose={() => setSending(null)}
+      />
     </section>
   )
 }
@@ -178,6 +192,7 @@ function PageRow(props: {
   canDelete: boolean
   onEdit: (on: boolean) => void
   onExport: () => void
+  onSend?: () => void
 }) {
   const count = createMemo(() => countNodes(props.page.nodes))
   const commitName = (value: string) => {
@@ -262,6 +277,15 @@ function PageRow(props: {
             icon: 'copy',
             onSelect: () => duplicatePage(props.page.id),
           },
+          ...(props.onSend
+            ? [
+                {
+                  label: 'Copy or move to project…',
+                  icon: 'folder' as const,
+                  onSelect: props.onSend,
+                },
+              ]
+            : []),
           { label: 'Export page…', icon: 'download', onSelect: props.onExport },
           'separator',
           {

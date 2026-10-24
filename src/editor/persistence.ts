@@ -1,30 +1,40 @@
 import {
+  DEFAULT_PROJECT,
   applySnapshot,
   canEdit,
   editor,
+  newProject,
   setAccess,
   setSaveState,
   snapshotOf,
+  workspaceOf,
 } from './store'
 import { uid } from './model'
 import type { Page, Version } from './model'
-import type { Preset, Snapshot, Viewport } from './store'
+import type { Preset, Project, Snapshot, Viewport } from './store'
 
-// Separate rows let saves write only changed pages and components.
+// Separate rows let saves write only changed pages, components and projects.
 
 type Meta = {
   id: 'workspace'
-  version: Version
-  pageOrder: Array<string>
-  pageId: string
+  projectId: string
   viewport: Viewport
 }
 
+// Before projects, the workspace row held the only project's page list.
+type OldMeta = Partial<Meta> & {
+  version?: Version
+  pageOrder?: Array<string>
+  pageId?: string
+}
+
+type ProjectRow = Omit<Project, 'pages'> & { pageOrder: Array<string> }
+
 const DB_NAME = 'polaris-playground-data'
 // Dexie created this database and stored its schema version 1 as IndexedDB
-// version 10. Opening at 10 reads existing workspaces as they are.
-const DB_VERSION = 10
-const STORES = ['pages', 'presets', 'meta']
+// version 10. Version 11 adds the projects store.
+const DB_VERSION = 11
+const STORES = ['pages', 'presets', 'meta', 'projects']
 
 export const requested = <T>(request: IDBRequest<T>) =>
   new Promise<T>((resolve, reject) => {
@@ -108,13 +118,16 @@ async function migrateLegacy() {
   legacy.close()
 
   if (record) {
-    await write({
-      version: record.doc.version,
-      pages: record.doc.pages,
-      pageId: record.pageId,
-      viewport: record.viewport,
-      presets: record.presets ?? [],
-    })
+    await write(
+      workspaceOf(
+        {
+          ...newProject(DEFAULT_PROJECT, record.doc.version, record.doc.pages),
+          pageId: record.pageId,
+        },
+        record.viewport,
+        record.presets ?? []
+      )
+    )
   }
 
   // Not awaited: a tab still running the first release would hold it open.
@@ -123,7 +136,7 @@ async function migrateLegacy() {
 
 async function read(): Promise<Snapshot | null> {
   const tx = (await db()).transaction(STORES)
-  const meta = await requested<Meta | undefined>(
+  const meta = await requested<OldMeta | undefined>(
     tx.objectStore('meta').get('workspace')
   )
 
@@ -132,19 +145,52 @@ async function read(): Promise<Snapshot | null> {
   }
 
   const pageStore = tx.objectStore('pages')
-  const [pages, presets] = await Promise.all([
-    Promise.all(
-      meta.pageOrder.map(id => requested<Page | undefined>(pageStore.get(id)))
-    ),
+  const [rows, presets] = await Promise.all([
+    requested<Array<ProjectRow>>(tx.objectStore('projects').getAll()),
     requested<Array<Preset>>(tx.objectStore('presets').getAll()),
   ])
 
+  // The first save after the upgrade stores this as a regular project.
+  if (!rows.length) {
+    rows.push({
+      id: 'default',
+      name: DEFAULT_PROJECT,
+      version: meta.version ?? 'v2',
+      pageOrder: meta.pageOrder ?? [],
+      pageId: meta.pageId ?? '',
+      createdAt: 0,
+      updatedAt: 0,
+    })
+  }
+
+  const projects = await Promise.all(
+    rows
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .map(async ({ pageOrder, ...row }): Promise<Project> => {
+        const found = await Promise.all(
+          pageOrder.map(id => requested<Page | undefined>(pageStore.get(id)))
+        )
+        const pages = found.filter((p): p is Page => !!p)
+
+        // A project must have a page to open; missing rows leave a blank one.
+        return {
+          ...row,
+          pages: pages.length
+            ? pages
+            : [{ id: uid(), name: 'Home', nodes: [] }],
+        }
+      })
+  )
+  const open = projects.find(p => p.id === meta.projectId) ?? projects[0]!
+
   return {
-    version: meta.version,
-    pageId: meta.pageId,
-    viewport: meta.viewport,
-    pages: pages.filter((p): p is Page => !!p),
+    version: open.version,
+    pages: open.pages,
+    pageId: open.pageId,
+    viewport: meta.viewport ?? 'desktop',
     presets: presets.sort((a, b) => a.createdAt - b.createdAt),
+    projectId: open.id,
+    projects,
   }
 }
 
@@ -159,6 +205,7 @@ export async function loadWorkspace() {
 type Written = {
   pages: Map<string, Page>
   presets: Map<string, Preset>
+  projects: Map<string, Project>
   meta: string
 }
 
@@ -185,14 +232,11 @@ export function purgeWorkspace() {
       throw new Error('Switch to the editing tab to clear local data.')
     }
 
-    const page: Page = { id: uid(), name: 'Home', nodes: [] }
-    const fresh: Snapshot = {
-      version: 'v2',
-      pages: [page],
-      pageId: page.id,
-      viewport: 'desktop',
-      presets: [],
-    }
+    const fresh = workspaceOf(
+      newProject(DEFAULT_PROJECT, 'v2', [
+        { id: uid(), name: 'Home', nodes: [] },
+      ])
+    )
 
     // A full write removes every old row and installs a blank workspace in
     // one transaction. Queued autosaves then see only the fresh snapshot.
@@ -212,26 +256,37 @@ export function purgeWorkspace() {
 
 const metaOf = (s: Snapshot): Meta => ({
   id: 'workspace',
-  version: s.version,
-  pageOrder: s.pages.map(p => p.id),
-  pageId: s.pageId,
+  projectId: s.projectId ?? '',
   viewport: s.viewport,
 })
 
+const rowOf = ({ pages, ...project }: Project): ProjectRow => ({
+  ...project,
+  pageOrder: pages.map(p => p.id),
+})
+
+const byId = <T extends { id: string }>(rows: Array<T>) =>
+  new Map(rows.map(r => [r.id, r]))
+
 const remember = (s: Snapshot): Written => ({
-  pages: new Map(s.pages.map(p => [p.id, p])),
-  presets: new Map(s.presets.map(p => [p.id, p])),
+  pages: byId((s.projects ?? []).flatMap(p => p.pages)),
+  presets: byId(s.presets),
+  projects: byId(s.projects ?? []),
   meta: JSON.stringify(metaOf(s)),
 })
+
+const same = <T>(a: Map<string, T>, b: Map<string, T>) =>
+  a.size === b.size && [...a].every(([id, row]) => b.get(id) === row)
 
 function syncRows<T extends { id: string }>(
   store: IDBObjectStore,
   rows: Array<T>,
-  before?: Map<string, T>
+  before?: Map<string, T>,
+  toRow: (row: T) => unknown = row => row
 ) {
   for (const row of rows) {
     if (before?.get(row.id) !== row) {
-      store.put(row)
+      store.put(toRow(row))
     }
   }
 
@@ -258,8 +313,15 @@ async function write(s: Snapshot, prev: Written | null = null) {
   const saved = committed(tx)
 
   try {
-    syncRows(tx.objectStore('pages'), s.pages, prev?.pages)
+    const projects = s.projects ?? []
+
+    syncRows(
+      tx.objectStore('pages'),
+      projects.flatMap(p => p.pages),
+      prev?.pages
+    )
     syncRows(tx.objectStore('presets'), s.presets, prev?.presets)
+    syncRows(tx.objectStore('projects'), projects, prev?.projects, rowOf)
 
     const meta = metaOf(s)
 
@@ -290,10 +352,9 @@ function flush() {
     if (
       prev &&
       next.meta === prev.meta &&
-      s.pages.every(p => prev.pages.get(p.id) === p) &&
-      s.pages.length === prev.pages.size &&
-      s.presets.every(p => prev.presets.get(p.id) === p) &&
-      s.presets.length === prev.presets.size
+      same(next.pages, prev.pages) &&
+      same(next.presets, prev.presets) &&
+      same(next.projects, prev.projects)
     ) {
       setSaveState('saved')
 
@@ -333,7 +394,9 @@ function startSaving() {
       s.presets === last.presets &&
       s.version === last.version &&
       s.pageId === last.pageId &&
-      s.viewport === last.viewport
+      s.viewport === last.viewport &&
+      s.projects === last.projects &&
+      s.projectId === last.projectId
     ) {
       return
     }

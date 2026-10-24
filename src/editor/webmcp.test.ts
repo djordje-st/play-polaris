@@ -2,7 +2,14 @@
 
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { resetEditor, selectedNode } from '../test/editor'
-import { currentPage, dismissToast, editor, select, setAccess } from './store'
+import {
+  currentPage,
+  dismissToast,
+  editor,
+  select,
+  setAccess,
+  setRoom,
+} from './store'
 import { modelContext, registerWebMCP, TOOL_NAMES } from './webmcp'
 import * as preview from './preview'
 
@@ -408,4 +415,46 @@ test('registration failures are contained and cleanup tolerates removed tools', 
   await Promise.resolve()
   expect(warn).toHaveBeenCalledTimes(TOOL_NAMES.length)
   expect(() => unregister!()).not.toThrow()
+})
+
+test('lists, creates and opens projects', async () => {
+  const text = async (name: string, input?: Record<string, unknown>) =>
+    (await invoke(name, input)).content[0].text
+  const first = editor.state.projectId
+
+  expect(JSON.parse(await text('get_workspace'))).toMatchObject({
+    project: { id: first, name: 'Default' },
+    projects: [{ id: first, pageCount: 1, polarisVersion: 'v1' }],
+  })
+
+  const created = JSON.parse(
+    await text('create_project', {
+      name: 'Client',
+      polarisVersion: 'v2',
+      template: 'settings',
+    })
+  )
+
+  expect(created.polarisVersion).toBe('v2')
+  expect(editor.state.projectId).toBe(created.projectId)
+  expect(currentPage().id).toBe(created.pageId)
+  expect(await text('create_project', { name: 'client' })).toContain(
+    'already exists'
+  )
+  expect(await text('open_project', { projectId: 'nope' })).toContain(
+    'No project with id'
+  )
+  expect(
+    JSON.parse(await text('open_project', { projectId: first })).pages
+  ).toEqual([{ id: 'page', name: 'Test page' }])
+
+  setRoom({ id: 'room', status: 'connected', peers: 1 })
+  expect(
+    await text('open_project', { projectId: created.projectId })
+  ).toContain('not available in a shared room')
+  expect(JSON.parse(await text('get_workspace'))).toMatchObject({
+    project: null,
+    projects: [],
+  })
+  setRoom(null)
 })

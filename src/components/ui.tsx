@@ -33,6 +33,7 @@ export const PATHS = {
   trash: 'M2.5 4.5h11M6.5 4.5V2.5h3v2M4 4.5l.7 9.5h6.6l.7-9.5',
   copy: 'M5.5 5.5h8v8h-8zM10.5 5.5v-3h-8v8h3',
   page: 'M4 1.5h5.5L12 4v10.5H4zM9.5 1.5V4H12',
+  folder: 'M1.5 3h4.5l1.5 1.5h7v8.5h-13z',
   layers: 'M8 2l6 3.5L8 9 2 5.5zM2 8.5L8 12l6-3.5',
   blocks:
     'M2.5 2.5h4.5V7H2.5zM9 2.5h4.5V7H9zM2.5 9h4.5v4.5H2.5zM9 9h4.5v4.5H9z',

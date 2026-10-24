@@ -18,12 +18,11 @@ export const componentName = (pageName: string) => {
   return base.endsWith('Page') ? base : `${base}Page`
 }
 
-export const fileName = (pageName: string, opts: ExportOptions) => {
-  const slug =
-    pageName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '') || 'page'
+export const slug = (name: string, fallback = 'page') =>
+  name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || fallback
 
-  return `${slug}.${opts.format === 'html' ? 'html' : opts.typescript ? 'tsx' : 'jsx'}`
-}
+export const fileName = (pageName: string, opts: ExportOptions) =>
+  `${slug(pageName)}.${opts.format === 'html' ? 'html' : opts.typescript ? 'tsx' : 'jsx'}`

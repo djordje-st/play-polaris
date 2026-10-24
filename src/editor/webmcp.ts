@@ -9,7 +9,9 @@ import {
   canUndo,
   canRedo,
   catalog,
+  createProject,
   currentPage,
+  currentProject,
   deletePage,
   duplicate,
   duplicatePage,
@@ -19,6 +21,7 @@ import {
   logAgent,
   move,
   openPage,
+  openProject,
   parse,
   remove,
   renamePage,
@@ -99,6 +102,10 @@ function page(pageId: unknown) {
   return currentPage()
 }
 
+const noRoom = () =>
+  editor.state.room &&
+  fail('Projects are not available in a shared room. Leave the room first.')
+
 const compact = (n: TreeNode): unknown =>
   isText(n)
     ? { id: n.id, text: n.text }
@@ -124,13 +131,24 @@ const TOOLS: Array<
     name: 'get_workspace',
     title: 'Get workspace',
     description:
-      'Overview of PlayPolaris: the Polaris web components version being previewed, every page with its id, the open page and the selected component. Start here.',
+      'Overview of PlayPolaris: the open project and every other project, the Polaris web components version being previewed, every page of the open project with its id, the open page and the selected component. Start here.',
     inputSchema: { type: 'object', properties: {} },
     annotations: { readOnlyHint: true },
     run: () => {
       const s = editor.state
 
       return {
+        project: s.room
+          ? null
+          : { id: s.projectId, name: currentProject(s)?.name },
+        projects: s.room
+          ? []
+          : s.projects.map(p => ({
+              id: p.id,
+              name: p.name,
+              pageCount: p.pages.length,
+              polarisVersion: p.version,
+            })),
         polarisVersion:
           s.doc.version === 'v1' ? 'v1 (polaris-1.js)' : 'v2 (polaris-2.js)',
         pages: s.doc.pages.map(p => ({
@@ -595,6 +613,83 @@ const TOOLS: Array<
       deletePage(p.id)
 
       return { deleted: p.id }
+    },
+  },
+  {
+    name: 'create_project',
+    title: 'Create project',
+    description:
+      'Creates a project (a separate set of pages with its own Polaris version) and opens it. It starts with one "Home" page from a template: blank, home, index, details, settings, empty. Saved components are shared by all projects.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        polarisVersion: { type: 'string', enum: ['v1', 'v2'] },
+        template: {
+          type: 'string',
+          enum: ['blank', 'home', 'index', 'details', 'settings', 'empty'],
+        },
+      },
+      required: ['name'],
+    },
+    summary: input => String(input.name),
+    run: input => {
+      noRoom()
+
+      const name = str(input.name, 'name').trim()
+
+      if (
+        editor.state.projects.some(
+          p => p.name.toLowerCase() === name.toLowerCase()
+        )
+      ) {
+        fail(`A project named “${name}” already exists.`)
+      }
+
+      const version =
+        input.polarisVersion === 'v1' || input.polarisVersion === 'v2'
+          ? input.polarisVersion
+          : editor.state.doc.version
+      const p = createProject({
+        name,
+        version,
+        template: String(input.template ?? 'blank'),
+      })!
+
+      return { projectId: p.id, pageId: p.pageId, polarisVersion: version }
+    },
+  },
+  {
+    name: 'open_project',
+    title: 'Open project',
+    description:
+      'Opens another project. Page tools then work on its pages; its undo history comes back with it.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: {
+          type: 'string',
+          description: 'Project id from get_workspace',
+        },
+      },
+      required: ['projectId'],
+    },
+    run: input => {
+      noRoom()
+
+      const id = str(input.projectId, 'projectId')
+
+      if (!editor.state.projects.some(p => p.id === id)) {
+        fail(`No project with id “${id}”. Call get_workspace for project ids.`)
+      }
+
+      openProject(id)
+
+      return {
+        projectId: id,
+        pages: editor.state.doc.pages.map(p => ({ id: p.id, name: p.name })),
+        openPageId: editor.state.pageId,
+      }
     },
   },
   {
