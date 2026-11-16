@@ -1,12 +1,18 @@
 import * as Y from 'yjs'
-import { isSafeAttr, isText } from './model'
-import type { Attrs, Doc, TreeNode } from './model'
+import { isSafeAttr, isText, isVersion } from './model'
+import type { Attrs, Doc, Page, TreeNode } from './model'
 
 type RecordValue = Y.Map<unknown>
 
 type Placement = { parent: string | null; order: number }
 
-type FlatNode = { tag: string; name?: string; text?: string; attrs?: Attrs }
+type FlatNode = {
+  tag: string
+  name?: string
+  target?: string
+  text?: string
+  attrs?: Attrs
+}
 
 function flatten(doc: Doc) {
   const nodes = new Map<string, FlatNode>()
@@ -30,7 +36,7 @@ function flatten(doc: Doc) {
   }
 
   for (const page of doc.pages) {
-    visit(page.id, { tag: '#page', name: page.name }, null)
+    visit(page.id, { tag: '#page', name: page.name, target: page.target }, null)
     walk(page.nodes, page.id)
   }
 
@@ -107,6 +113,10 @@ export class SharedDocument {
         this.settings.set('version', after.version)
       }
 
+      if (before.branding !== after.branding) {
+        this.settings.set('branding', JSON.stringify(after.branding ?? {}))
+      }
+
       for (const id of prev.nodes.keys()) {
         if (!next.nodes.has(id)) {
           this.records.delete(id)
@@ -129,6 +139,10 @@ export class SharedDocument {
 
         if (node.name !== old?.name) {
           record.set('name', node.name)
+        }
+
+        if (node.target !== old?.target) {
+          record.set('target', node.target)
         }
 
         if (node.text !== old?.text) {
@@ -215,7 +229,7 @@ export class SharedDocument {
   read(): Doc | null {
     const version = this.settings.get('version')
 
-    if (version !== 'v1' && version !== 'v2') {
+    if (!isVersion(version)) {
       return null
     }
 
@@ -233,13 +247,18 @@ export class SharedDocument {
       )
     const pages = entries
       .filter(([, r]) => r.get('tag') === '#page')
-      .map(([id, r]) => ({
+      .map(([id, r]): Page => ({
         id,
         name:
           typeof r.get('name') === 'string'
             ? (r.get('name') as string)
             : 'Untitled',
-        nodes: [] as TreeNode[],
+        nodes: [],
+        // Read through targetOf, which rejects anything that isn't a target.
+        target:
+          typeof r.get('target') === 'string'
+            ? (r.get('target') as string)
+            : undefined,
       }))
 
     // Concurrent deletion of different last pages still leaves everyone a usable canvas.
@@ -323,6 +342,26 @@ export class SharedDocument {
       }
     }
 
-    return { version, pages }
+    // Peer data: resolveBranding validates each value where it is used.
+    const stored = this.settings.get('branding')
+
+    // Keep one object while the setting is unchanged, so selectors stay quiet.
+    if (stored !== this.brandingText) {
+      this.brandingText = stored
+
+      try {
+        const parsed: unknown = JSON.parse(stored ?? 'null')
+
+        this.branding =
+          parsed && typeof parsed === 'object' ? parsed : undefined
+      } catch {
+        this.branding = undefined
+      }
+    }
+
+    return { version, pages, branding: this.branding }
   }
+
+  private brandingText?: string
+  private branding: Doc['branding']
 }

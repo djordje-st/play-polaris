@@ -1,7 +1,7 @@
 import { For, Show, createMemo, createSignal, onMount } from 'solid-js'
 import { useSelector } from '@tanstack/solid-store'
 import { displayName } from '../polaris/catalog'
-import { CATEGORIES } from '../polaris/library'
+import { PALETTE } from '../polaris/library'
 import { allFit, rootTarget, targetAt } from '../editor/dnd'
 import { locate } from '../editor/model'
 import {
@@ -102,7 +102,7 @@ function Picker(props: { at: Inserting }) {
       }))
     }
 
-    for (const c of CATEGORIES) {
+    for (const c of PALETTE) {
       for (const item of c.items) {
         if (!catalog()?.components[item.tag]) {
           continue

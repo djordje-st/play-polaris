@@ -185,6 +185,7 @@ async function read(): Promise<Snapshot | null> {
 
   return {
     version: open.version,
+    branding: open.branding,
     pages: open.pages,
     pageId: open.pageId,
     viewport: meta.viewport ?? 'desktop',

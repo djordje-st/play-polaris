@@ -15,6 +15,7 @@
   "scripts": {
     "dev": "vite dev --port 3000",
     "generate-routes": "tsr generate",
+    "generate-manifests": "node scripts/extension-manifests.ts",
     "build": "vite build",
     "start": "node .output/server/index.mjs",
     "preview": "vite preview",
@@ -44,6 +45,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20261004.1",
+    "@shopify/ui-extensions": "2026.10.2",
     "@tanstack/devtools-vite": "0.8.5",
     "@tanstack/eslint-config": "0.4.0",
     "@tanstack/intent": "^0.5.2",

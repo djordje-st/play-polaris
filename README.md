@@ -4,6 +4,8 @@
 
 Prototype Shopify App Home screens with [Polaris web components](https://shopify.dev/docs/api/app-home/web-components), check them against Polaris's nesting and slot rules, and export HTML or React JSX. The editor runs in the browser. Pages are saved to IndexedDB, with no accounts or backend for saved work.
 
+It also previews checkout and customer account UI extensions at their extension targets, on fixed mock pages you can restyle with the branding settings and export.
+
 This is an independent project, not made or endorsed by Shopify.
 
 ![PlayPolaris builder in dark mode](public/builder-screenshot-dark.webp)
@@ -15,10 +17,11 @@ This is an independent project, not made or endorsed by Shopify.
 - **Add between elements.** Hover the gap between two layers, or use the add buttons on a hovered element in the preview, to open a component picker. It only lists components that are allowed at that spot. At the end of a nested group, the pointer's horizontal position picks how deep the new component goes. Clicking an empty container's placeholder adds into it.
 - **Validation.** Checks allowed parents, slot contents (for example `primary-action` takes one primary button), property values, duplicate ids, broken `commandFor`/`interestFor` links and accessibility basics. Problems appear in the tree, the inspector and the status bar.
 - **Inspector.** Typed controls for every property, generated from the component manifest. It also shows per-value docs, slot placement, and slot and event references.
+- **Checkout and customer accounts.** Switch the toolbar to **Checkout** or **Accounts** to build UI extensions. Each page is one extension with an extension target, chosen in the inspector: the preview shows a fixed mock of the checkout, Thank you, order status, order index or profile page and renders the extension where Shopify would (for example `purchase.checkout.block.render` or `customer-account.order-status.block.render`). The palette, inspector and validation use the components and properties of that surface. Edit the branding (colors, fonts, corner radius, field and button styles) in the same panel and watch the mock page follow. Each surface keeps its own projects.
 - **Projects.** Keep each app, client or idea in its own project, each with its own pages, Polaris version and undo history. Switch projects from the toolbar, where the list shows page counts and when each was last edited. You can create (with a starting template and version), rename, duplicate and delete projects, and copy or move a page to another project. Saved components are shared by all projects. Work saved before projects existed opens as the "Default" project.
 - **Pages.** Create blank pages or start from templates (Home, Index, Details, Settings, Empty state). You can rename, duplicate and delete pages.
 - **Saved components.** Select anything you built and choose "Save as component" to reuse it. Saved components appear first in the palette and the add-here picker; click or drag them into place. They follow the same nesting rules, checked for every root element, so a button saved with its modal only goes where both are allowed. You can rename them, replace their contents with the current selection, or delete them (with undo). Inserted copies are independent snapshots.
-- **Export.** HTML (a fragment, or a full document with the Polaris and optional App Bridge script tags) or React JSX/TSX, for one page or all pages (zip).
+- **Export.** HTML (a fragment, or a full document with the Polaris and optional App Bridge script tags) or React JSX/TSX, for one page or all pages (zip). Extension projects export Preact modules with the matching `shopify.extension.toml` targeting entries, and the branding settings as a `checkoutAndAccountsConfigurationUpdate` mutation with its variables.
 - **Import.** Paste HTML, or JSX copied from Shopify's docs. Event handlers, scripts and non-Polaris tags are removed.
 - **Editing.** Hover any element in the preview or any row in the tree to duplicate or delete it. Undo/redo (typing in a field merges into one step), copy/cut/paste nodes as HTML through the system clipboard, keyboard navigation of the tree, and an interact mode for using the components.
 - **Collaborative editing.** Choose **Share → Start shared session** to create a separate shared copy of the open project's pages. Send the room link to edit together. Each browser saves its copy locally, and undo affects that browser's edits. Your personal workspace stays separate.
@@ -99,8 +102,17 @@ Additional preview and editing tools:
 
 Screenshot results contain a text metadata block (page name, dimensions, and capture warnings) followed by `{ type: "image", mimeType: "image/png", data: "<base64>" }`. The agent integration must forward the image block or decode it to a PNG file and attach that file to show the screenshot in chat. A text-only bridge will need image forwarding; WebMCP itself does not guarantee inline image display. Screenshots use [SnapDOM](https://github.com/zumerlab/snapdom), loaded only on capture, to rasterize the live preview and its open shadow roots locally. Editor overlays are excluded. Captures are limited to 16 megapixels; check metadata warnings for resources or rendering that needed a fallback. Nothing is uploaded.
 
+### Checkout and customer account previews
+
+Shopify renders checkout and customer account components itself and publishes types for them, but no runtime or manifest. So for these surfaces:
+
+- The component catalog (`src/polaris/manifests/*.json`) is generated from the types in `@shopify/ui-extensions`. Run `pnpm generate-manifests` after updating that package.
+- The preview draws its own stand-in for each component (`src/polaris/elements.ts`) and a fixed mock of each host page (`src/polaris/surfaces.ts`), both styled by the branding settings. The mocks follow the layout, sizes and default branding of Shopify's current checkout and customer accounts. They show structure, targets and branding; they are not pixel-accurate.
+- Branding is stored per project and exported for the Admin GraphQL API (`src/polaris/branding.ts`). It offers system fonts only, since those preview without Shopify's font CDN.
+
 ## Limits
 
+- Checkout and customer account previews are approximations (see above). Container-query property values use their fallback, payment icons are labelled chips, and QR codes and maps are placeholders. Check the result in a real checkout before shipping.
 - The preview needs network access to Shopify's CDN for the Polaris runtime.
 - App Bridge APIs (toasts, save bar, resource picker) aren't simulated, because they need the Shopify admin.
 - The JSX importer handles literal props (`min={0}`, `disabled={true}`). It doesn't evaluate expressions.

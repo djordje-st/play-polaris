@@ -34,6 +34,8 @@ export const Route = createFileRoute('/')({
           featureList: [
             ...FEATURES.map(f => f.title),
             'HTML and React JSX export',
+            'Checkout and customer account UI extension previews',
+            'Checkout branding editor and export',
             'Real-time collaborative editing',
             'AI agent tools over WebMCP',
           ],

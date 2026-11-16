@@ -575,8 +575,18 @@ html.dark .home {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
 }
+.home-surfaces {
+  padding-bottom: 112px;
+}
+.home-surface-card > img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-bottom: 1px solid var(--color-line);
+}
 .home-team-card,
-.home-agent-card {
+.home-agent-card,
+.home-surface-card {
   overflow: hidden;
   border: 1px solid var(--color-line);
   border-radius: 12px;

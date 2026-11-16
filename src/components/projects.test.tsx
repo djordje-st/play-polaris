@@ -35,7 +35,7 @@ test('creates, switches, renames and deletes projects from the toolbar', () => {
     'Another project already uses this name'
   )
   input('dialog[aria-label="New project"] input', 'Client', root)
-  button('v2, new admin design', root).click()
+  button('App Home v2', root).click()
   button('Create project', root).click()
 
   const client = store.currentProject()!

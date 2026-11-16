@@ -13,6 +13,9 @@ import { useDragDropManager } from '@dnd-kit/solid'
 import { POLARIS_SCRIPT, VERSION_LABEL, displayName } from '../polaris/catalog'
 import { isContainer, validate } from '../polaris/rules'
 import { TEMPLATES } from '../polaris/library'
+import { brandingVars } from '../polaris/branding'
+import { ELEMENTS_CSS, installElements } from '../polaris/elements'
+import { SCREEN_CSS, screenHTML, targetOf } from '../polaris/surfaces'
 import {
   forgivingTarget,
   isHorizontal,
@@ -20,7 +23,7 @@ import {
   rootTarget,
   targetAt,
 } from '../editor/dnd'
-import { isText, locate, pathTo, slotOf } from '../editor/model'
+import { isExtension, isText, locate, pathTo, slotOf } from '../editor/model'
 import { createRenderer } from '../editor/renderer'
 import { registerPreview } from '../editor/preview'
 import {
@@ -85,16 +88,46 @@ const OVERLAY_CSS = `
   stroke-linecap: round; stroke-linejoin: round; }
 `
 
+// App Home loads Shopify's runtime. Extension surfaces get a fixed mock of
+// the host page, drawn with the stand-in components.
 const frameDocument = (version: Version) =>
-  `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script src="${POLARIS_SCRIPT[version]}"></script><style>${FRAME_CSS}</style></head><body class="pg-design"></body></html>`
+  `<!doctype html><html lang="en" data-surface="${version}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${
+    isExtension(version)
+      ? `<style>${FRAME_CSS}${ELEMENTS_CSS}${SCREEN_CSS}</style>`
+      : `<script src="${POLARIS_SCRIPT[version]}"></script><style>${FRAME_CSS}</style>`
+  }</head><body class="pg-design">${isExtension(version) ? '<div id="pg-screen"></div>' : ''}</body></html>`
 
 type Box = { left: number; top: number; width: number; height: number }
 
 // Reveal selected overlays so their contents can be edited in design mode.
 
-const OVERLAYS = new Set(['s-modal', 's-popover', 's-menu', 's-tooltip'])
+const OVERLAYS = new Set([
+  's-modal',
+  's-sheet',
+  's-popover',
+  's-menu',
+  's-tooltip',
+])
+
+type StandIn = Element & {
+  showOverlay: (anchor: Element | null) => void
+  hideOverlay: () => void
+}
+
+// The stand-ins on extension surfaces open and place themselves.
+const isStandIn = (el: Element): el is StandIn => 'shown' in el
 
 function showOverlay(doc: Document, el: Element) {
+  if (isStandIn(el)) {
+    const id = CSS.escape(el.id)
+
+    return el.showOverlay(
+      el.id
+        ? doc.querySelector(`[commandfor="${id}"], [interestfor="${id}"]`)
+        : null
+    )
+  }
+
   if (el.localName === 's-modal') {
     return (el as HTMLElementTagNameMap['s-modal']).showOverlay()
   }
@@ -117,6 +150,10 @@ function showOverlay(doc: Document, el: Element) {
 }
 
 function hideOverlay(el: Element) {
+  if (isStandIn(el)) {
+    return el.hideOverlay()
+  }
+
   if (el.localName === 's-modal') {
     return (el as HTMLElementTagNameMap['s-modal']).hideOverlay()
   }
@@ -150,7 +187,7 @@ export function Canvas() {
             {v => <Frame version={v} />}
           </Show>
 
-          <Show when={empty()}>
+          <Show when={empty() && !isExtension(version())}>
             <EmptyPage />
           </Show>
         </div>
@@ -177,6 +214,13 @@ function Frame(props: { version: Version }) {
   const mode = useSelector(editor, s => s.mode)
   const selectedId = useSelector(editor, s => s.selectedId)
   const pageId = useSelector(editor, s => s.pageId)
+  const branding = useSelector(editor, s => s.doc.branding)
+  const extension = isExtension(props.version)
+  const target = useSelector(editor, s =>
+    extension ? targetOf(currentPage(s), props.version) : null
+  )
+  // Where the page renders: an extension target's mount, else the body.
+  const [mount, setMount] = createSignal<Element>()
   const manager = useDragDropManager()
 
   onCleanup(
@@ -212,7 +256,7 @@ function Frame(props: { version: Version }) {
       return
     }
 
-    if (!win.customElements.get('s-page')) {
+    if (!extension && !win.customElements.get('s-page')) {
       setState('error')
 
       return
@@ -655,7 +699,7 @@ function Frame(props: { version: Version }) {
       if (t.zone === 'inside' || !t.refId) {
         const box = t.parentId
           ? renderer.rect(t.parentId)
-          : doc.body.getBoundingClientRect()
+          : (mount() ?? doc.body).getBoundingClientRect()
 
         r =
           box &&
@@ -724,11 +768,54 @@ function Frame(props: { version: Version }) {
 
   createEffect(() => {
     const c = ctx()
+    const t = target()
+
+    if (!c || !t) {
+      return
+    }
+
+    c.doc.getElementById('pg-screen')!.innerHTML = screenHTML(t)
+
+    const el = c.doc.querySelector('.pg-mount')!
+
+    setMount(el)
+    el.scrollIntoView({ block: 'center' })
+  })
+
+  createEffect(() => {
+    const c = ctx()
+
+    if (c && extension) {
+      for (const [name, value] of Object.entries(brandingVars(branding()))) {
+        c.doc.documentElement.style.setProperty(name, value)
+      }
+    }
+  })
+
+  let installed = false
+
+  createEffect(() => {
+    const c = ctx()
     const cat = catalog()
 
-    if (c && cat) {
-      c.renderer.render(nodes(), cat)
+    if (!c || !cat || (extension && !mount())) {
+      return
     }
+
+    // The catalog can lag a surface switch; wait for the one that matches.
+    if (extension && !installed && cat.version === props.version) {
+      installed = true
+
+      const specs = Object.values(cat.components)
+
+      installElements(
+        c.win as Window & typeof globalThis,
+        specs.map(s => s.tag),
+        [...new Set(specs.flatMap(s => s.props.map(p => p.name)))]
+      )
+    }
+
+    c.renderer.render(nodes(), cat, mount())
   })
 
   createEffect(() => {

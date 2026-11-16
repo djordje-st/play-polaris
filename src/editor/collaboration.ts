@@ -82,7 +82,11 @@ export async function createRoom(snapshot = snapshotOf()) {
   try {
     shared.write(
       { version: snapshot.version, pages: [] },
-      { version: snapshot.version, pages: snapshot.pages }
+      {
+        version: snapshot.version,
+        pages: snapshot.pages,
+        branding: snapshot.branding,
+      }
     )
     await save(db, shared, snapshot)
 

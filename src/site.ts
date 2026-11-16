@@ -8,10 +8,10 @@ export const SITE = {
   description:
     'Build Shopify app UI with real Polaris web components. Drag and drop, start from app templates, and export React JSX or HTML. Free, open source, no signup.',
   summary:
-    'A free, open-source Shopify Polaris playground and UI builder. Compose App Home screens from real Polaris web components, validate nesting and slots, start from app templates, collaborate in shared sessions, work with AI agents over WebMCP, and export React JSX or HTML.',
+    'A free, open-source Shopify Polaris playground and UI builder. Compose App Home screens from real Polaris web components, validate nesting and slots, start from app templates, collaborate in shared sessions, work with AI agents over WebMCP, and export React JSX or HTML. It also previews checkout and customer account UI extensions at their extension targets and exports checkout branding settings.',
   imageAlt:
     'PlayPolaris, a free Shopify Polaris UI builder, showing a real App Home screen and the component inspector',
-  updated: '2026-10-22',
+  updated: '2026-11-16',
 } as const
 
 export function pageHead(path: string, title: string, description: string) {
@@ -88,6 +88,30 @@ export const FEATURES: Array<{
   },
 ]
 
+/** The extension surfaces, each shown with a capture of its preview. */
+export const SURFACES: Array<{
+  image: string
+  alt: string
+  eyebrow: string
+  title: string
+  body: string
+}> = [
+  {
+    image: '/home/checkout.webp',
+    alt: 'Checkout preview with a product offer extension rendered at the purchase.checkout.cart-line-list.render-after target, below the order summary line items',
+    eyebrow: 'Checkout UI extensions',
+    title: 'Pick a target. See it in checkout.',
+    body: 'Build with the checkout component set, then choose where the extension renders: any documented target on the checkout and Thank you pages. Export it as a Preact module with its shopify.extension.toml entry.',
+  },
+  {
+    image: '/home/accounts.webp',
+    alt: 'Customer account order status preview with custom brand colors and heading font, and an extension rendered at the customer-account.order-status.block.render target',
+    eyebrow: 'Customer accounts and branding',
+    title: 'Order pages, in your brand.',
+    body: 'Preview extensions on the order status, order index and profile pages. Change colors, fonts and corner radius and watch the page follow, then export the branding settings as an Admin API mutation.',
+  },
+]
+
 export const STEPS: Array<{ title: string; body: string }> = [
   {
     title: 'Start from a template',
@@ -156,6 +180,10 @@ export const FAQ: Array<{ id?: string; q: string; a: string }> = [
   {
     q: 'Can AI agents use it?',
     a: 'Yes, in browsers that support WebMCP. The builder exposes tools for reading the component catalog, creating and editing pages, validating and exporting, so an agent can build screens alongside you.',
+  },
+  {
+    q: 'Can I preview checkout and customer account UI extensions?',
+    a: "Yes. Switch the builder to Checkout or Accounts to build an extension, pick its extension target, and see it on a mock checkout, Thank you, order or profile page. You can edit the branding settings and export them, along with the extension code. Shopify doesn't publish a runtime for these components, so the preview uses stand-ins and is approximate.",
   },
   {
     q: 'Does it build a complete Shopify app or storefront?',

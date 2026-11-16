@@ -1,7 +1,7 @@
 import { For, Show, createMemo, createSignal, onCleanup } from 'solid-js'
 import { useSelector } from '@tanstack/solid-store'
 import { displayName } from '../polaris/catalog'
-import { CATEGORIES } from '../polaris/library'
+import { PALETTE } from '../polaris/library'
 import { useDraggable } from '@dnd-kit/solid'
 import { countNodes, locate } from '../editor/model'
 import {
@@ -315,7 +315,7 @@ function Palette(props: { ref: (el: HTMLInputElement) => void }) {
   const groups = createMemo(() => {
     const q = query().trim().toLowerCase()
 
-    return CATEGORIES.map(c => ({
+    return PALETTE.map(c => ({
       ...c,
       items: c.items.filter(
         i =>

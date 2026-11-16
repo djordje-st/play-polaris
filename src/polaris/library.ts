@@ -1,16 +1,23 @@
-import { uid } from '../editor/model.ts'
+import { isExtension, uid } from '../editor/model.ts'
 import type { Version } from '../editor/model.ts'
 
+// `ext*` apply on the checkout and customer account surfaces, where a few
+// components are documented elsewhere or take different properties.
 type Entry = {
   tag: string
   blurb: string
   docs: string | null
   preset?: string
+  extDocs?: string
+  extPreset?: string
+  /** Only exists on the extension surfaces. */
+  extension?: true
 }
 
 const IMG = 'https://cdn.shopify.com/static/sample-images'
 
-export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
+/** Every surface's components; the palette shows the ones in the open catalog. */
+export const PALETTE: Array<{ name: string; items: Array<Entry> }> = [
   {
     name: 'Layout',
     items: [
@@ -83,6 +90,7 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
         tag: 's-scroll-box',
         blurb: 'Scrollable region with a fixed size',
         docs: null,
+        extDocs: 'layout-and-structure/scroll-box',
         preset: /* HTML */ `
           <s-scroll-box maxBlockSize="200px"></s-scroll-box>
         `,
@@ -139,6 +147,7 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
         tag: 's-unordered-list',
         blurb: 'Bulleted list',
         docs: 'layout-and-structure/unordered-list',
+        extDocs: 'typography-and-content/unordered-list',
         preset: /* HTML */ `
           <s-unordered-list>
             <s-list-item>First point</s-list-item>
@@ -150,6 +159,7 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
         tag: 's-ordered-list',
         blurb: 'Numbered list for sequential steps',
         docs: 'layout-and-structure/ordered-list',
+        extDocs: 'typography-and-content/ordered-list',
         preset: /* HTML */ `
           <s-ordered-list>
             <s-list-item>First step</s-list-item>
@@ -161,15 +171,106 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
         tag: 's-list-item',
         blurb: 'An entry in an ordered or unordered list',
         docs: 'layout-and-structure/unordered-list',
+        extDocs: 'typography-and-content/unordered-list',
         preset: /* HTML */ `
           <s-list-item>List item</s-list-item>
         `,
+      },
+      {
+        tag: 's-details',
+        extension: true,
+        blurb: 'Content that expands under a summary',
+        docs: 'typography-and-content/details',
+        preset: /* HTML */ `
+          <s-details>
+            <s-summary>Shipping details</s-summary>
+            <s-paragraph>Orders ship within two business days.</s-paragraph>
+          </s-details>
+        `,
+      },
+      {
+        tag: 's-summary',
+        extension: true,
+        blurb: 'The always-visible label of a details block',
+        docs: 'typography-and-content/details',
+        preset: /* HTML */ `
+          <s-summary>Summary</s-summary>
+        `,
+      },
+      {
+        tag: 's-abbreviation',
+        extension: true,
+        blurb: 'Short form with its full meaning on hover',
+        docs: 'typography-and-content/abbreviation',
+        preset: /* HTML */ `
+          <s-abbreviation title="United States dollar">USD</s-abbreviation>
+        `,
+      },
+      {
+        tag: 's-time',
+        extension: true,
+        blurb: 'A date or time that machines can read',
+        docs: 'typography-and-content/time',
+        preset: /* HTML */ `
+          <s-time dateTime="2026-01-15">January 15, 2026</s-time>
+        `,
+      },
+      {
+        tag: 's-skeleton-paragraph',
+        extension: true,
+        blurb: 'Placeholder lines while text loads',
+        docs: 'typography-and-content/skeleton-paragraph',
       },
     ],
   },
   {
     name: 'Actions',
     items: [
+      {
+        tag: 's-clipboard-item',
+        extension: true,
+        blurb: 'Copies text when its button is pressed',
+        docs: 'actions/clipboard-item',
+        preset: /* HTML */ `
+          <s-button
+            commandFor="copy-{id}"
+            command="--copy"
+            variant="secondary"
+          >
+            Copy code
+          </s-button>
+          <s-clipboard-item
+            id="copy-{id}"
+            text="WELCOME10"
+          ></s-clipboard-item>
+        `,
+      },
+      {
+        tag: 's-customer-account-action',
+        extension: true,
+        blurb: 'Modal content for an order action',
+        docs: 'actions/customer-account-action',
+        preset: /* HTML */ `
+          <s-customer-account-action heading="Report a problem">
+            <s-text-area
+              label="What went wrong?"
+              rows="3"
+            ></s-text-area>
+            <s-button
+              slot="primary-action"
+              variant="primary"
+            >
+              Send
+            </s-button>
+            <s-button
+              slot="secondary-actions"
+              variant="secondary"
+            >
+              Cancel
+            </s-button>
+          </s-customer-account-action>
+        `,
+      },
       {
         tag: 's-button',
         blurb: 'Triggers an action or navigates',
@@ -228,6 +329,22 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
         tag: 's-menu',
         blurb: 'List of actions opened from a button',
         docs: 'actions/menu',
+        extPreset: /* HTML */ `
+          <s-button
+            commandFor="menu-{id}"
+            variant="secondary"
+          >
+            Manage
+          </s-button>
+          <s-menu
+            id="menu-{id}"
+            accessibilityLabel="Order actions"
+          >
+            <s-button>Edit address</s-button>
+            <s-button>Download invoice</s-button>
+            <s-button tone="critical">Cancel order</s-button>
+          </s-menu>
+        `,
         preset: /* HTML */ `
           <s-button
             commandFor="menu-{id}"
@@ -253,6 +370,7 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
         tag: 's-press-button',
         blurb: 'Button that toggles between pressed and unpressed',
         docs: null,
+        extDocs: 'actions/press-button',
         preset: /* HTML */ `
           <s-press-button>Toggle</s-press-button>
         `,
@@ -262,6 +380,56 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
   {
     name: 'Forms',
     items: [
+      {
+        tag: 's-form',
+        extension: true,
+        blurb: 'Wraps fields so they submit together',
+        docs: 'forms/form',
+        preset: /* HTML */ `
+          <s-form>
+            <s-stack gap="base">
+              <s-text-field
+                label="Gift message"
+                name="message"
+              ></s-text-field>
+              <s-button type="submit">Save</s-button>
+            </s-stack>
+          </s-form>
+        `,
+      },
+      {
+        tag: 's-phone-field',
+        extension: true,
+        blurb: 'Phone number input',
+        docs: 'forms/phone-field',
+        preset: /* HTML */ `
+          <s-phone-field label="Phone"></s-phone-field>
+        `,
+      },
+      {
+        tag: 's-consent-checkbox',
+        extension: true,
+        blurb: 'Checkbox tied to a marketing consent policy',
+        docs: 'forms/consent-checkbox',
+        preset: /* HTML */ `
+          <s-consent-checkbox
+            policy="sms-marketing"
+            label="Text me with news and offers"
+          ></s-consent-checkbox>
+        `,
+      },
+      {
+        tag: 's-consent-phone-field',
+        extension: true,
+        blurb: 'Phone input tied to a marketing consent policy',
+        docs: 'forms/consent-phone-field',
+        preset: /* HTML */ `
+          <s-consent-phone-field
+            policy="sms-marketing"
+            label="Mobile number"
+          ></s-consent-phone-field>
+        `,
+      },
       {
         tag: 's-text-field',
         blurb: 'Single-line text input',
@@ -326,6 +494,9 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
         tag: 's-url-field',
         blurb: 'Web address input',
         docs: 'forms/url-field',
+        extPreset: /* HTML */ `
+          <s-url-field label="Website"></s-url-field>
+        `,
         preset: /* HTML */ `
           <s-url-field
             label="Website"
@@ -543,6 +714,18 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
     name: 'Feedback',
     items: [
       {
+        tag: 's-announcement',
+        extension: true,
+        blurb: 'Dismissible bar for a short, page-wide message',
+        docs: 'feedback-and-status-indicators/announcement',
+        preset: /* HTML */ `
+          <s-announcement>
+            Free shipping on orders over $50.
+            <s-link href="#">See details</s-link>
+          </s-announcement>
+        `,
+      },
+      {
         tag: 's-badge',
         blurb: 'Short status label',
         docs: 'feedback-and-status-indicators/badge',
@@ -611,6 +794,90 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
     name: 'Media',
     items: [
       {
+        tag: 's-product-thumbnail',
+        extension: true,
+        blurb: 'Product image with an optional quantity badge',
+        docs: 'media-and-visuals/product-thumbnail',
+        preset: /* HTML */ `
+          <s-product-thumbnail
+            src="${IMG}/teapot.jpg"
+            alt="Ceramic teapot"
+          ></s-product-thumbnail>
+        `,
+      },
+      {
+        tag: 's-image-group',
+        extension: true,
+        blurb: 'Up to four images in a compact grid',
+        docs: 'media-and-visuals/image-group',
+        preset: /* HTML */ `
+          <s-image-group>
+            <s-image
+              src="${IMG}/teapot.jpg"
+              alt="Ceramic teapot"
+            ></s-image>
+            <s-image
+              src="${IMG}/bath.jpeg"
+              alt="Bath salts"
+            ></s-image>
+            <s-image
+              src="${IMG}/garnished.jpeg"
+              alt="Recipe card set"
+            ></s-image>
+          </s-image-group>
+        `,
+      },
+      {
+        tag: 's-payment-icon',
+        extension: true,
+        blurb: 'Logo of a payment method',
+        docs: 'media-and-visuals/payment-icon',
+        preset: /* HTML */ `
+          <s-payment-icon type="visa"></s-payment-icon>
+        `,
+      },
+      {
+        tag: 's-qr-code',
+        extension: true,
+        blurb: 'Scannable code for a link',
+        docs: 'media-and-visuals/qr-code',
+        preset: /* HTML */ `
+          <s-qr-code content="https://shopify.com"></s-qr-code>
+        `,
+      },
+      {
+        tag: 's-map',
+        extension: true,
+        blurb: 'Interactive map with optional markers',
+        docs: 'media-and-visuals/map',
+        preset: /* HTML */ `
+          <s-map
+            latitude="45.5152"
+            longitude="-122.6784"
+            zoom="12"
+            blockSize="240px"
+            accessibilityLabel="Store location"
+          >
+            <s-map-marker
+              latitude="45.5152"
+              longitude="-122.6784"
+            ></s-map-marker>
+          </s-map>
+        `,
+      },
+      {
+        tag: 's-map-marker',
+        extension: true,
+        blurb: 'A pin on a map',
+        docs: 'media-and-visuals/map',
+        preset: /* HTML */ `
+          <s-map-marker
+            latitude="45.5152"
+            longitude="-122.6784"
+          ></s-map-marker>
+        `,
+      },
+      {
         tag: 's-avatar',
         blurb: 'Picture or initials for a person or business',
         docs: 'media-and-visuals/avatar',
@@ -660,6 +927,23 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
     name: 'Overlays',
     items: [
       {
+        tag: 's-sheet',
+        extension: true,
+        blurb: 'Panel that slides up over the page',
+        docs: 'overlays/sheet',
+        preset: /* HTML */ `
+          <s-button commandFor="sheet-{id}">Open sheet</s-button>
+          <s-sheet
+            id="sheet-{id}"
+            heading="Sheet title"
+          >
+            <s-paragraph>
+              Sheets hold supporting detail without leaving the page.
+            </s-paragraph>
+          </s-sheet>
+        `,
+      },
+      {
         tag: 's-modal',
         blurb: 'Dialog for focused tasks, opened from a button',
         docs: 'overlays/modal',
@@ -705,6 +989,13 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
         tag: 's-tooltip',
         blurb: 'Hint shown on hover or focus',
         docs: 'typography-and-content/tooltip',
+        extDocs: 'overlays/tooltip',
+        extPreset: /* HTML */ `
+          <s-clickable interestFor="tooltip-{id}">
+            <s-icon type="info"></s-icon>
+          </s-clickable>
+          <s-tooltip id="tooltip-{id}">Helpful context</s-tooltip>
+        `,
         preset: /* HTML */ `
           <s-icon
             type="info"
@@ -717,38 +1008,173 @@ export const CATEGORIES: Array<{ name: string; items: Array<Entry> }> = [
   },
 ]
 
+/** The App Home components. */
+export const CATEGORIES = PALETTE.map(c => ({
+  ...c,
+  items: c.items.filter(i => !i.extension),
+}))
+
 const ENTRIES = new Map(
-  CATEGORIES.flatMap(c => c.items.map(i => [i.tag, { ...i, category: c.name }]))
+  PALETTE.flatMap(c => c.items.map(i => [i.tag, { ...i, category: c.name }]))
 )
 
 export const entryFor = (tag: string) => ENTRIES.get(tag)
 
+const DOCS_API: Record<Version, string> = {
+  v1: 'app-home/v1.1',
+  v2: 'app-home/latest',
+  checkout: 'checkout-ui-extensions/latest',
+  'customer-account': 'customer-account-ui-extensions/latest',
+}
+
 export function docsUrl(tag: string, version: Version) {
-  const path = ENTRIES.get(tag)?.docs
+  const entry = ENTRIES.get(tag)
+  const path = (isExtension(version) && entry?.extDocs) || entry?.docs
 
   if (!path) {
     return null
   }
 
-  return `https://shopify.dev/docs/api/app-home/${version === 'v1' ? 'v1.1' : 'latest'}/web-components/${path}`
+  return `https://shopify.dev/docs/api/${DOCS_API[version]}/web-components/${path}`
 }
 
-export function presetFor(tag: string) {
-  const id = uid()
+export function presetFor(tag: string, version: Version = 'v2') {
+  const entry = ENTRIES.get(tag)
+  const preset =
+    (isExtension(version) && entry?.extPreset) ||
+    entry?.preset ||
+    `<${tag}></${tag}>`
 
-  return (ENTRIES.get(tag)?.preset ?? `<${tag}></${tag}>`).replaceAll(
-    '{id}',
-    id
-  )
+  return preset.replaceAll('{id}', uid())
 }
 
-export const TEMPLATES: Array<{
+type Template = {
   id: string
   name: string
   blurb: string
   description: string
   html: string
-}> = [
+  /** Extension target the starter is meant for. */
+  target?: string
+}
+
+const EXTENSION_TEMPLATES: Array<Template> = [
+  {
+    id: 'blank',
+    name: 'Blank',
+    blurb: 'An empty extension to build from scratch',
+    description: 'An extension with no components.',
+    html: '',
+  },
+  {
+    id: 'notice',
+    name: 'Notice',
+    blurb: 'A banner with a short message',
+    description: 'An info banner with a heading, a message and a link.',
+    html: /* HTML */ `
+      <s-banner
+        heading="Free returns for 30 days"
+        tone="info"
+      >
+        Changed your mind? Send it back at no cost.
+        <s-link href="#">Read the policy</s-link>
+      </s-banner>
+    `,
+  },
+  {
+    id: 'offer',
+    name: 'Product offer',
+    blurb: 'An add-on with a button',
+    description:
+      'A bordered offer with a product thumbnail, name, price and an Add button.',
+    html: /* HTML */ `
+      <s-stack gap="base">
+        <s-heading>You might also like</s-heading>
+        <s-grid
+          gridTemplateColumns="auto 1fr auto"
+          gap="base"
+          alignItems="center"
+          padding="base"
+          border="base"
+          borderRadius="base"
+        >
+          <s-product-thumbnail
+            src="${IMG}/garnished.jpeg"
+            alt="Recipe card set"
+          ></s-product-thumbnail>
+          <s-stack gap="small-400">
+            <s-text type="strong">Recipe card set</s-text>
+            <s-text color="subdued">$24.00</s-text>
+          </s-stack>
+          <s-button variant="secondary">Add</s-button>
+        </s-grid>
+      </s-stack>
+    `,
+  },
+  {
+    id: 'field',
+    name: 'Custom field',
+    blurb: 'Collect an extra detail',
+    description:
+      'A heading, a text area for delivery instructions and a consent checkbox.',
+    html: /* HTML */ `
+      <s-stack gap="base">
+        <s-heading>Delivery instructions</s-heading>
+        <s-text-area
+          label="Notes for the courier"
+          name="instructions"
+          rows="3"
+        ></s-text-area>
+        <s-checkbox
+          label="Leave the parcel with a neighbor if I'm out"
+          name="neighbor"
+        ></s-checkbox>
+      </s-stack>
+    `,
+  },
+  {
+    id: 'page',
+    name: 'Full page',
+    blurb: 'A new page in customer accounts',
+    description:
+      'A full customer account page with a heading, a primary action and two sections.',
+    target: 'customer-account.page.render',
+    html: /* HTML */ `
+      <s-page
+        heading="{name}"
+        subheading="Earn points on every order"
+      >
+        <s-button
+          slot="primary-action"
+          variant="primary"
+        >
+          Redeem points
+        </s-button>
+        <s-section heading="Your balance">
+          <s-stack gap="small">
+            <s-heading>1,240 points</s-heading>
+            <s-progress value="0.62"></s-progress>
+            <s-text color="subdued">760 points to your next reward</s-text>
+          </s-stack>
+        </s-section>
+        <s-section heading="Recent activity">
+          <s-stack gap="small">
+            <s-text>Order #1042 · +63 points</s-text>
+            <s-text>Order #1037 · +24 points</s-text>
+          </s-stack>
+        </s-section>
+      </s-page>
+    `,
+  },
+]
+
+/** Starters that fit the surface. */
+export const templatesFor = (version: Version) =>
+  !isExtension(version)
+    ? TEMPLATES
+    : EXTENSION_TEMPLATES.filter(t => !t.target || t.target.startsWith(version))
+
+export const TEMPLATES: Array<Template> = [
   {
     id: 'blank',
     name: 'Blank',

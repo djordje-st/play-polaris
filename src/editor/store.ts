@@ -2,13 +2,16 @@ import { batch } from 'solid-js'
 import { createStore } from '@tanstack/solid-store'
 import manifestV1Url from 'polaris-types-v1/custom-elements?url'
 import manifestV2Url from 'polaris-types-v2/custom-elements?url'
+import manifestCheckoutUrl from '../polaris/manifests/checkout.json?url'
+import manifestAccountUrl from '../polaris/manifests/customer-account.json?url'
 import { buildCatalog } from '../polaris/catalog'
-import { TEMPLATES, presetFor } from '../polaris/library'
+import { presetFor, templatesFor } from '../polaris/library'
 import { placementError } from '../polaris/rules'
 import {
   attrIds,
   cloneFresh,
   insertNodes,
+  isExtension,
   isText,
   locate,
   moveNode,
@@ -20,6 +23,7 @@ import {
   updateNode,
   withSlot,
 } from './model'
+import type { Branding } from '../polaris/branding'
 import type { Catalog, Manifest } from '../polaris/catalog'
 import type { Doc, ElementNode, Page, TreeNode, Version } from './model'
 import type { SharedDocument } from './shared'
@@ -76,11 +80,12 @@ export type Preset = {
   createdAt: number
 }
 
-/** For the open project, `version`, `pages` and `pageId` mirror the editor. */
+/** For the open project, `version`, `pages`, `branding` and `pageId` mirror the editor. */
 export type Project = {
   id: string
   name: string
   version: Version
+  branding?: Branding
   pages: Array<Page>
   pageId: string
   createdAt: number
@@ -160,8 +165,11 @@ function sync(s: State): State {
     return s
   }
 
-  const { version, pages } = s.doc
-  const edited = open.pages !== pages || open.version !== version
+  const { version, pages, branding } = s.doc
+  const edited =
+    open.pages !== pages ||
+    open.version !== version ||
+    open.branding !== branding
 
   if (!edited && open.pageId === s.pageId) {
     return s
@@ -171,6 +179,7 @@ function sync(s: State): State {
     ...open,
     version,
     pages,
+    branding,
     pageId: s.pageId,
     updatedAt: edited ? Date.now() : open.updatedAt,
   }
@@ -200,6 +209,8 @@ export const catalog = () => {
 const MANIFEST_URL: Record<Version, string> = {
   v1: manifestV1Url,
   v2: manifestV2Url,
+  checkout: manifestCheckoutUrl,
+  'customer-account': manifestAccountUrl,
 }
 
 const catalogs: Partial<Record<Version, Catalog>> = {}
@@ -229,6 +240,7 @@ export async function loadCatalog(version: Version) {
  */
 export type Snapshot = {
   version: Version
+  branding?: Branding
   pages: Array<Page>
   pageId: string
   viewport: Viewport
@@ -239,6 +251,7 @@ export type Snapshot = {
 
 export const snapshotOf = (s: State = S()): Snapshot => ({
   version: s.doc.version,
+  branding: s.doc.branding,
   pages: s.doc.pages,
   pageId: s.pageId,
   viewport: s.viewport,
@@ -274,6 +287,7 @@ export const workspaceOf = (
   presets: Array<Preset> = []
 ): Snapshot => ({
   version: project.version,
+  branding: project.branding,
   pages: project.pages,
   pageId: project.pageId,
   viewport,
@@ -301,7 +315,7 @@ export function initWorkspace(saved: Snapshot | null, c: Catalog) {
   histories.clear()
   patch({
     ready: true,
-    doc: { version, pages },
+    doc: { version, pages, branding: saved?.branding },
     pageId,
     projects,
     projectId: projects.some(p => p.id === saved?.projectId)
@@ -324,7 +338,11 @@ export function applySnapshot(snap: Snapshot) {
   update(s =>
     settle({
       ...s,
-      doc: { version: snap.version, pages: snap.pages },
+      doc: {
+        version: snap.version,
+        pages: snap.pages,
+        branding: snap.branding,
+      },
       presets: snap.presets,
       viewport: snap.viewport,
       projects: snap.projects ?? s.projects,
@@ -524,6 +542,29 @@ export const setVersion = (version: Version) => {
   }
 }
 
+export const setTarget = (pageId: string, target: string) =>
+  commit(doc => ({
+    ...doc,
+    pages: doc.pages.map(p => (p.id === pageId ? { ...p, target } : p)),
+  }))
+
+/** `null` restores the default for that setting. */
+export const setBranding = (key: keyof Branding, value: string | null) =>
+  commit(
+    doc => {
+      const { [key]: _prev, ...rest } = doc.branding ?? {}
+
+      return {
+        ...doc,
+        branding: value === null ? rest : { ...doc.branding, [key]: value },
+      }
+    },
+    { key: `branding:${key}` }
+  )
+
+export const resetBranding = () =>
+  commit(doc => (doc.branding ? { ...doc, branding: undefined } : doc))
+
 export const setCatalog = (c: Catalog) => patch({ catalog: c })
 
 export const setDrag = (drag: DragState | null) => patch({ drag })
@@ -664,7 +705,7 @@ export function insertComponent(tag: string, at?: Target) {
     return notify(target.error, 'critical')
   }
 
-  const { nodes } = parse(presetFor(tag))
+  const { nodes } = parse(presetFor(tag, S().doc.version))
 
   insertAt(nodes, target as Target, nodes.find(n => n.tag === tag)?.id)
 }
@@ -785,9 +826,11 @@ const escapeAttr = (s: string) =>
 export function fromTemplate(
   templateId: string,
   name: string,
-  c: Catalog = catalog()
+  c: Catalog = catalog(),
+  version: Version = c.version
 ) {
-  const tpl = TEMPLATES.find(t => t.id === templateId) ?? TEMPLATES[0]!
+  const all = templatesFor(version)
+  const tpl = all.find(t => t.id === templateId) ?? all[0]!
 
   return parseHTML(tpl.html.replaceAll('{name}', escapeAttr(name)), c).nodes
 }
@@ -811,8 +854,8 @@ function uniqueName(base: string, taken: Array<{ name: string }>) {
 export const uniquePageName = (base: string, pages = S().doc.pages) =>
   uniqueName(base, pages)
 
-export function addPage(name: string, nodes: Array<TreeNode>) {
-  const page: Page = { id: uid(), name, nodes }
+export function addPage(name: string, nodes: Array<TreeNode>, target?: string) {
+  const page: Page = { id: uid(), name, nodes, target }
 
   commit(doc => ({ ...doc, pages: [...doc.pages, page] }), { select: null })
   patch({ pageId: page.id })
@@ -844,6 +887,7 @@ export function duplicatePage(pageId: string) {
   }
 
   const page: Page = {
+    ...src,
     id: uid(),
     name: uniquePageName(`${src.name} copy`),
     nodes: cloneFresh(src.nodes, new Set()),
@@ -994,7 +1038,11 @@ export function openProject(id: string) {
     ...state,
     ...history,
     projectId: id,
-    doc: { version: project.version, pages: project.pages },
+    doc: {
+      version: project.version,
+      pages: project.pages,
+      branding: project.branding,
+    },
     pageId: project.pageId,
     selectedId: null,
     hoveredId: null,
@@ -1004,21 +1052,26 @@ export function openProject(id: string) {
   }))
 }
 
-export function createProject(input: {
-  name: string
-  version: Version
-  template: string
-}) {
+/**
+ * App Home templates use components from both versions, so any catalog parses
+ * them. Extension surfaces need their own: pass `c` from `loadCatalog`.
+ */
+export function createProject(
+  input: { name: string; version: Version; template: string },
+  c: Catalog = catalog()
+) {
   if (!canEdit()) {
     return null
   }
 
-  // Templates use components from both versions, so any catalog parses them.
+  const name = isExtension(input.version) ? 'Extension' : 'Home'
+  const tpl = templatesFor(input.version).find(t => t.id === input.template)
   const project = newProject(input.name, input.version, [
     {
       id: uid(),
-      name: 'Home',
-      nodes: fromTemplate(input.template, 'Home'),
+      name,
+      nodes: fromTemplate(input.template, name, c, input.version),
+      target: tpl?.target,
     },
   ])
 
@@ -1026,6 +1079,69 @@ export function createProject(input: {
   openProject(project.id)
 
   return project
+}
+
+/**
+ * The catalog that parses `version`'s starters: the loaded one when it fits
+ * (App Home starters work with either version), else one that has to load.
+ */
+export function starterCatalog(version: Version) {
+  const c = S().catalog
+  const fits =
+    c?.version === version ||
+    (c && !isExtension(c.version) && !isExtension(version))
+
+  return fits ? c : loadCatalog(version)
+}
+
+const SURFACE_PROJECT: Record<Version, string> = {
+  v1: 'App Home',
+  v2: 'App Home',
+  checkout: 'Checkout',
+  'customer-account': 'Customer accounts',
+}
+
+/**
+ * Checkout and customer accounts don't share components with App Home, so
+ * each surface keeps its own projects: switching opens the latest, or starts one.
+ */
+export async function openSurface(version: Version) {
+  const s = S()
+  const current = s.doc.version
+
+  if (version === current || !canEdit()) {
+    return
+  }
+
+  const inPlace = !isExtension(version) && !isExtension(current)
+
+  if (s.shared || inPlace) {
+    return setVersion(version)
+  }
+
+  const latest = (match: (p: Project) => boolean) =>
+    s.projects
+      .filter(match)
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .at(0)
+  const existing =
+    latest(p => p.version === version) ??
+    (isExtension(version) ? undefined : latest(p => !isExtension(p.version)))
+
+  if (existing) {
+    openProject(existing.id)
+
+    return existing.version === version ? undefined : setVersion(version)
+  }
+
+  createProject(
+    {
+      name: uniqueProjectName(SURFACE_PROJECT[version]),
+      version,
+      template: isExtension(version) ? 'notice' : 'home',
+    },
+    await starterCatalog(version)
+  )
 }
 
 export function renameProject(id: string, name: string) {
@@ -1048,13 +1164,14 @@ export function duplicateProject(id: string) {
   }
 
   const pages = src.pages.map(p => ({
+    ...p,
     id: uid(),
-    name: p.name,
     nodes: cloneFresh(p.nodes, new Set()),
   }))
   const open = pages[src.pages.findIndex(p => p.id === src.pageId)]
   const copy = {
     ...newProject(uniqueProjectName(`${src.name} copy`), src.version, pages),
+    branding: src.branding,
     pageId: (open ?? pages[0]!).id,
   }
   const projects = [...S().projects]
@@ -1100,6 +1217,7 @@ export function sendPage(pageId: string, projectId: string, moving = false) {
   }
 
   const copy: Page = {
+    ...page,
     id: uid(),
     name: uniquePageName(page.name, target.pages),
     nodes: cloneFresh(page.nodes, new Set()),

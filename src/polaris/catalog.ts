@@ -1,16 +1,26 @@
 import type { Version } from '../editor/model.ts'
 
+// Extension surfaces have no public runtime; the preview draws its own.
 export const POLARIS_SCRIPT: Record<Version, string> = {
   v1: 'https://cdn.shopify.com/shopifycloud/polaris-1.js',
   v2: 'https://cdn.shopify.com/shopifycloud/polaris-2.js',
+  checkout: '',
+  'customer-account': '',
 }
 
 export const TYPES_PACKAGE: Record<Version, string> = {
   v1: '@shopify/polaris-types@1.1.0',
   v2: '@shopify/polaris-types@2.0.0',
+  checkout: '@shopify/ui-extensions@2026.10.2',
+  'customer-account': '@shopify/ui-extensions@2026.10.2',
 }
 
-export const VERSION_LABEL: Record<Version, string> = { v1: 'v1', v2: 'v2' }
+export const VERSION_LABEL: Record<Version, string> = {
+  v1: 'v1',
+  v2: 'v2',
+  checkout: 'Checkout',
+  'customer-account': 'Customer accounts',
+}
 
 export type PropKind = 'enum' | 'boolean' | 'number' | 'string'
 

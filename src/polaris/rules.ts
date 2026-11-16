@@ -23,7 +23,7 @@ type Rule = {
 
 const TEXT: SlotRule = { accepts: [], text: true }
 const INLINE: SlotRule = {
-  accepts: ['s-text', 's-link', 's-number'],
+  accepts: ['s-text', 's-link', 's-number', 's-abbreviation', 's-time'],
   text: true,
 }
 const PRIMARY: SlotRule = {
@@ -35,6 +35,7 @@ const SECONDARY = ['secondary', 'auto']
 const LIST: SlotRule = { accepts: ['s-list-item'] }
 
 export const RULES: Record<string, Rule> = {
+  's-abbreviation': { slots: { '': TEXT } },
   's-badge': { slots: { '': TEXT } },
   's-banner': {
     slots: {
@@ -49,6 +50,12 @@ export const RULES: Record<string, Rule> = {
   's-button-group': {
     slots: {
       '': { accepts: ['s-button'] },
+      'primary-action': PRIMARY,
+      'secondary-actions': { accepts: ['s-button'], variants: SECONDARY },
+    },
+  },
+  's-customer-account-action': {
+    slots: {
       'primary-action': PRIMARY,
       'secondary-actions': { accepts: ['s-button'], variants: SECONDARY },
     },
@@ -74,7 +81,10 @@ export const RULES: Record<string, Rule> = {
   's-grid-item': { parents: ['s-grid'] },
   's-heading': { slots: { '': TEXT } },
   's-link': { slots: { '': TEXT } },
+  's-image-group': { slots: { '': { accepts: ['s-image'] } } },
   's-list-item': { parents: ['s-ordered-list', 's-unordered-list'] },
+  's-map': { slots: { '': { accepts: ['s-map-marker'] } } },
+  's-map-marker': { parents: ['s-map'] },
   's-menu': { slots: { '': { accepts: ['s-button', 's-section'] } } },
   's-modal': {
     slots: {
@@ -135,6 +145,13 @@ export const RULES: Record<string, Rule> = {
     },
   },
   's-select': { slots: { '': { accepts: ['s-option', 's-option-group'] } } },
+  's-sheet': {
+    slots: {
+      'primary-action': PRIMARY,
+      'secondary-actions': { accepts: ['s-button'], variants: SECONDARY },
+    },
+  },
+  's-summary': { parents: ['s-details'] },
   's-table': {
     slots: { '': { accepts: ['s-table-header-row', 's-table-body'] } },
   },
@@ -153,6 +170,7 @@ export const RULES: Record<string, Rule> = {
   },
   's-table-cell': { parents: ['s-table-row'] },
   's-text': { slots: { '': INLINE } },
+  's-time': { slots: { '': TEXT } },
   's-tooltip': {
     slots: { '': { accepts: ['s-text', 's-paragraph'], text: true } },
   },
@@ -174,14 +192,25 @@ export function slotRule(
   return RULES[parentTag]?.slots?.[slot]
 }
 
-export function describeSlot(parentTag: string, slot: string) {
+// Rules cover every surface; a slot only lists what this catalog has.
+const accepted = (rule: SlotRule, catalog?: Catalog) =>
+  (rule.accepts ?? []).filter(t => !catalog || catalog.components[t])
+
+export function describeSlot(
+  parentTag: string,
+  slot: string,
+  catalog?: Catalog
+) {
   const r = slotRule(parentTag, slot)
 
   if (!r?.accepts) {
     return 'Any component'
   }
 
-  const parts = [...(r.text ? ['text'] : []), ...r.accepts.map(t => `<${t}>`)]
+  const parts = [
+    ...(r.text ? ['text'] : []),
+    ...accepted(r, catalog).map(t => `<${t}>`),
+  ]
   let s = parts.join(', ') || 'Text'
 
   if (r.max) {
@@ -253,7 +282,7 @@ export function placementError(
 
   if (!rule.accepts.includes(childTag)) {
     return rule.accepts.length
-      ? `${slotName(slot).replace(/^./, c => c.toUpperCase())} of ${displayName(parentTag)} only accepts ${list(rule.accepts)}`
+      ? `${slotName(slot).replace(/^./, c => c.toUpperCase())} of ${displayName(parentTag)} only accepts ${list(accepted(rule, catalog))}`
       : `${displayName(parentTag)} only accepts text`
   }
 

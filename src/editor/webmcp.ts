@@ -1,7 +1,8 @@
-import { CATEGORIES, docsUrl, entryFor } from '../polaris/library'
+import { PALETTE, docsUrl, entryFor } from '../polaris/library'
 import { RULES, describeSlot, placementError, validate } from '../polaris/rules'
+import { VERSION_LABEL } from '../polaris/catalog'
 import { exportPage, toHTML } from './codegen'
-import { isText, locate, slotOf, textOf, walk } from './model'
+import { isExtension, isText, locate, slotOf, textOf, walk } from './model'
 import { inspectPreview, screenshotPreview } from './preview'
 import {
   addPage,
@@ -149,8 +150,11 @@ const TOOLS: Array<
               pageCount: p.pages.length,
               polarisVersion: p.version,
             })),
-        polarisVersion:
-          s.doc.version === 'v1' ? 'v1 (polaris-1.js)' : 'v2 (polaris-2.js)',
+        polarisVersion: isExtension(s.doc.version)
+          ? `${VERSION_LABEL[s.doc.version]} UI extensions (preview uses stand-in components)`
+          : s.doc.version === 'v1'
+            ? 'v1 (polaris-1.js)'
+            : 'v2 (polaris-2.js)',
         pages: s.doc.pages.map(p => ({
           id: p.id,
           name: p.name,
@@ -438,14 +442,14 @@ const TOOLS: Array<
     inputSchema: {
       type: 'object',
       properties: {
-        category: { type: 'string', enum: CATEGORIES.map(c => c.name) },
+        category: { type: 'string', enum: PALETTE.map(c => c.name) },
       },
     },
     annotations: { readOnlyHint: true },
     run: input => {
       const c = catalog()
 
-      return CATEGORIES.filter(
+      return PALETTE.filter(
         cat => !input.category || cat.name === input.category
       ).map(cat => ({
         category: cat.name,
@@ -492,7 +496,7 @@ const TOOLS: Array<
         })),
         slots: spec.slots.map(s => ({
           name: s.name || '(default)',
-          accepts: describeSlot(tag, s.name),
+          accepts: describeSlot(tag, s.name, catalog()),
           description: s.description,
         })),
         events: spec.events.map(e => e.name),

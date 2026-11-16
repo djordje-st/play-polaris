@@ -1,6 +1,6 @@
 import { For, onCleanup, onMount } from 'solid-js'
 import { Link } from '@tanstack/solid-router'
-import { FAQ, FEATURES, SITE, STEPS } from '../site'
+import { FAQ, FEATURES, SITE, STEPS, SURFACES } from '../site'
 import { BuilderShowcase, ExportExample } from './HomeDemos'
 import { SiteFooter, SiteHeader } from './SiteChrome'
 import { Icon } from './ui'
@@ -101,7 +101,8 @@ export function Home() {
                 </a>
               </div>
               <p class="home-hero-footnote">
-                Free and open source. No signup. Polaris v2 and v1.
+                Free and open source. No signup. App Home, checkout and customer
+                accounts.
               </p>
             </div>
             <BuilderShowcase />
@@ -294,6 +295,62 @@ export function Home() {
               markup={MARKUP}
               name="Overview"
             />
+          </div>
+        </section>
+        <section
+          id="extensions"
+          class="home-together home-surfaces home-container"
+          aria-labelledby="extensions-title"
+        >
+          <div
+            class="home-section-heading"
+            data-reveal
+          >
+            <div>
+              <p class="home-eyebrow">Checkout and customer accounts</p>
+              <h2 id="extensions-title">
+                Preview UI extensions where Shopify renders them.
+              </h2>
+            </div>
+            <p>
+              Switch the builder to Checkout or Accounts. Shopify renders these
+              components itself, so the preview uses stand-ins modeled on its
+              default pages: close, not pixel-exact.
+            </p>
+          </div>
+          <div class="home-together-grid">
+            <For each={SURFACES}>
+              {surface => (
+                <article
+                  class="home-surface-card"
+                  data-reveal
+                >
+                  <img
+                    src={surface.image}
+                    alt={surface.alt}
+                    width="1120"
+                    height="580"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div class="home-card-copy">
+                    <p class="home-eyebrow">{surface.eyebrow}</p>
+                    <h3>{surface.title}</h3>
+                    <p>{surface.body}</p>
+                    <Link
+                      to="/builder"
+                      class="home-text-link"
+                    >
+                      Try it in the builder{' '}
+                      <Icon
+                        name="chevronRight"
+                        size={16}
+                      />
+                    </Link>
+                  </div>
+                </article>
+              )}
+            </For>
           </div>
         </section>
         <section

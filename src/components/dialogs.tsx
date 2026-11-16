@@ -1,7 +1,7 @@
 import { For, Show, createMemo, createSignal } from 'solid-js'
 import { displayName } from '../polaris/catalog'
-import { TEMPLATES } from '../polaris/library'
-import { countNodes, isText } from '../editor/model'
+import { templatesFor } from '../polaris/library'
+import { countNodes, isExtension, isText } from '../editor/model'
 import {
   addPage,
   editor,
@@ -18,7 +18,7 @@ import {
 } from '../editor/store'
 import { Button, Dialog, DialogHeader } from './ui'
 import type { JSX } from 'solid-js'
-import type { TreeNode } from '../editor/model'
+import type { TreeNode, Version } from '../editor/model'
 import type { Preset } from '../editor/store'
 
 export function Field(props: {
@@ -90,6 +90,7 @@ export function NewPageDialog(props: { open: boolean; onClose: () => void }) {
 function NewPageForm(props: { onClose: () => void }) {
   const [name, setName] = createSignal(uniquePageName('Untitled'))
   const [template, setTemplate] = createSignal('blank')
+  const version = editor.state.doc.version
   const error = () =>
     !name().trim()
       ? 'Give the page a name'
@@ -102,7 +103,11 @@ function NewPageForm(props: { onClose: () => void }) {
       onSubmit={submitIfValid(error, () => {
         const trimmed = name().trim()
 
-        addPage(trimmed, fromTemplate(template(), trimmed))
+        addPage(
+          trimmed,
+          fromTemplate(template(), trimmed),
+          templatesFor(version).find(t => t.id === template())?.target
+        )
         props.onClose()
       })}
     >
@@ -110,7 +115,9 @@ function NewPageForm(props: { onClose: () => void }) {
         title="New page"
         onClose={props.onClose}
       >
-        Start blank or from a common App Home layout.
+        {isExtension(version)
+          ? 'Each page is one extension. Start blank or from a common pattern.'
+          : 'Start blank or from a common App Home layout.'}
       </DialogHeader>
 
       <div class="space-y-5 px-5 py-4">
@@ -128,6 +135,7 @@ function NewPageForm(props: { onClose: () => void }) {
         </Field>
 
         <TemplatePicker
+          version={version}
           value={template()}
           onChange={setTemplate}
         />
@@ -149,6 +157,7 @@ function NewPageForm(props: { onClose: () => void }) {
 }
 
 export function TemplatePicker(props: {
+  version: Version
   value: string
   onChange: (id: string) => void
 }) {
@@ -157,7 +166,7 @@ export function TemplatePicker(props: {
       <legend class="mb-1 text-sm font-medium text-ink-2">Start from</legend>
 
       <div class="grid grid-cols-3 gap-2">
-        <For each={TEMPLATES}>
+        <For each={templatesFor(props.version)}>
           {t => (
             <label
               class={`cursor-pointer rounded-lg border px-3 py-2.5 transition-colors ${

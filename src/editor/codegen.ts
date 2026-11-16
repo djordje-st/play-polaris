@@ -1,6 +1,6 @@
 import { POLARIS_SCRIPT } from '../polaris/catalog.ts'
-import { isText } from './model.ts'
-import { componentName } from './names.ts'
+import { isExtension, isText } from './model.ts'
+import { componentName, slug } from './names.ts'
 import type { Catalog } from '../polaris/catalog.ts'
 import type { ElementNode, Page, TreeNode, Version } from './model.ts'
 
@@ -199,13 +199,31 @@ export function generate(
   const w = writer()
 
   if (opts.format === 'jsx') {
-    if (opts.typescript) {
-      w.emit('keyword', '/// ')
-      w.emit('plain', '<reference types="@shopify/polaris-types" />\n\n')
-    }
+    if (isExtension(version)) {
+      // The module shape Shopify CLI scaffolds: Preact renders into the target.
+      w.emit('keyword', 'import ')
+      w.emit('value', "'@shopify/ui-extensions/preact'")
+      w.emit('keyword', '\nimport ')
+      w.emit('plain', '{ render } ')
+      w.emit('keyword', 'from ')
+      w.emit('value', "'preact'")
+      w.emit('keyword', '\n\nexport default function ')
+      w.emit('plain', `extension() {\n${INDENT}render(`)
+      w.emit('punct', '<')
+      w.emit('tag', 'Extension')
+      w.emit('punct', ' />')
+      w.emit('plain', ', document.body)\n}\n\n')
+      w.emit('keyword', 'function ')
+      w.emit('plain', `Extension() {\n${INDENT}`)
+    } else {
+      if (opts.typescript) {
+        w.emit('keyword', '/// ')
+        w.emit('plain', '<reference types="@shopify/polaris-types" />\n\n')
+      }
 
-    w.emit('keyword', 'export default function ')
-    w.emit('plain', `${componentName(page.name)}() {\n${INDENT}`)
+      w.emit('keyword', 'export default function ')
+      w.emit('plain', `${componentName(page.name)}() {\n${INDENT}`)
+    }
 
     if (!page.nodes.length) {
       w.emit('keyword', 'return ')
@@ -273,6 +291,20 @@ export function generate(
   w.emit('punct', '</body>\n</html>\n')
 
   return w.out
+}
+
+/** `shopify.extension.toml` entries that register each module at its target. */
+export function extensionToml(
+  name: string,
+  modules: Array<{ file: string; target: string }>
+) {
+  const quote = (s: string) => JSON.stringify(s)
+  const targeting = modules.map(
+    m =>
+      `[[extensions.targeting]]\ntarget = ${quote(m.target)}\nmodule = ${quote(`./src/${m.file}`)}\n`
+  )
+
+  return `# Merge into the shopify.extension.toml that Shopify CLI generated, keeping its uid.\napi_version = "2026-10"\n\n[[extensions]]\ntype = "ui_extension"\nname = ${quote(name)}\nhandle = ${quote(slug(name, 'extension'))}\n\n${targeting.join('\n')}`
 }
 
 export const tokensToString = (tokens: Array<Token>) =>

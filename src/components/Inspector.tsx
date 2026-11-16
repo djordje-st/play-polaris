@@ -7,6 +7,8 @@ import {
   displayName,
 } from '../polaris/catalog'
 import { docsUrl, entryFor } from '../polaris/library'
+import { BRANDING_FIELDS, resolveBranding } from '../polaris/branding'
+import { TARGETS, targetOf } from '../polaris/surfaces'
 import {
   RULES,
   attrError,
@@ -15,7 +17,14 @@ import {
   slotRule,
   validate,
 } from '../polaris/rules'
-import { countNodes, isText, locate, slotOf, textOf } from '../editor/model'
+import {
+  countNodes,
+  isExtension,
+  isText,
+  locate,
+  slotOf,
+  textOf,
+} from '../editor/model'
 import {
   currentPage,
   duplicate,
@@ -23,16 +32,21 @@ import {
   move,
   remove,
   renamePage,
+  resetBranding,
   select,
   setAttr,
+  setBranding,
+  setTarget,
   setText,
 } from '../editor/store'
 import { modKey } from '../editor/shortcuts'
+import { ExportDialog } from './ExportDialog'
 import { iconFor } from './Tree'
 import { SavePresetDialog, inputClass } from './dialogs'
 import { Icon, IconButton, Popover } from './ui'
 import type { JSX } from 'solid-js'
 import type { PropSpec } from '../polaris/catalog'
+import type { Surface } from '../polaris/surfaces'
 import type { Issue } from '../polaris/rules'
 import type { ElementNode } from '../editor/model'
 
@@ -409,7 +423,7 @@ function ElementSections(props: {
                     </span>
 
                     <span class="truncate text-xs text-ink-3">
-                      {describeSlot(props.node.tag, s.name)}
+                      {describeSlot(props.node.tag, s.name, catalog())}
                     </span>
                   </div>
 
@@ -633,6 +647,7 @@ function PagePanel() {
   const catalog = useSelector(editor, s => s.catalog!)
   const version = useSelector(editor, s => s.doc.version)
   const issues = createMemo(() => validate(catalog(), page().nodes))
+  const extension = () => isExtension(version())
 
   return (
     <div class="scroll-thin min-h-0 flex-1 overflow-y-auto">
@@ -643,13 +658,19 @@ function PagePanel() {
             class="text-accent"
           />
 
-          <h2 class="text-[15px] leading-6 font-semibold">Page</h2>
+          <h2 class="text-[15px] leading-6 font-semibold">
+            {extension() ? 'Extension' : 'Page'}
+          </h2>
         </div>
 
         <p class="mt-1 text-sm text-ink-2">
           Select a component in the preview or in Layers to edit it.
         </p>
       </header>
+
+      <Show when={extension()}>
+        <TargetSection />
+      </Show>
 
       <Section title="Name">
         <input
@@ -687,16 +708,25 @@ function PagePanel() {
         </Show>
       </Section>
 
+      <Show when={extension()}>
+        <BrandingSection />
+      </Show>
+
       <Section title="Preview">
         <dl class="space-y-2 text-sm">
           <div>
-            <dt class="text-ink-3">Polaris</dt>
+            <dt class="text-ink-3">{extension() ? 'Surface' : 'Polaris'}</dt>
 
             <dd>
               {VERSION_LABEL[version()]} ·{' '}
-              <code class="font-mono text-xs">
-                {POLARIS_SCRIPT[version()].split('/').pop()}
-              </code>
+              <Show
+                when={!extension()}
+                fallback="a fixed mock page with stand-in components, since Shopify renders these itself"
+              >
+                <code class="font-mono text-xs">
+                  {POLARIS_SCRIPT[version()].split('/').pop()}
+                </code>
+              </Show>
             </dd>
           </div>
 
@@ -710,5 +740,164 @@ function PagePanel() {
         </dl>
       </Section>
     </div>
+  )
+}
+
+function TargetSection() {
+  const version = useSelector(editor, s => s.doc.version)
+  const page = useSelector(editor, s => currentPage(s))
+  const target = () => targetOf(page(), version())
+
+  return (
+    <Section title="Extension target">
+      <select
+        aria-label="Extension target"
+        title={target()}
+        class={`${inputClass} font-mono text-xs`}
+        value={target()}
+        onChange={e => setTarget(page().id, e.currentTarget.value)}
+      >
+        <For each={TARGETS[version() as Surface]}>
+          {g => (
+            <optgroup label={g.group}>
+              <For each={g.targets}>
+                {t => (
+                  <option
+                    value={t}
+                    selected={t === target()}
+                  >
+                    {t}
+                  </option>
+                )}
+              </For>
+            </optgroup>
+          )}
+        </For>
+      </select>
+
+      <p class="mt-1.5 text-xs text-ink-3">
+        <Show
+          when={target().includes('.block.')}
+          fallback={
+            target().includes('-item.')
+              ? 'Shopify repeats this target for every item. The preview shows the first.'
+              : 'The preview marks where Shopify renders this target.'
+          }
+        >
+          Merchants place block targets in the checkout and accounts editor. The
+          preview shows one possible spot.
+        </Show>
+      </p>
+    </Section>
+  )
+}
+
+function BrandingSection() {
+  const stored = useSelector(editor, s => s.doc.branding)
+  const values = createMemo(() => resolveBranding(stored()))
+  const [exporting, setExporting] = createSignal(false)
+  const groups = [...new Set(BRANDING_FIELDS.map(f => f.group))]
+
+  return (
+    <Section
+      title="Branding"
+      aside={
+        <span class="flex items-center gap-3">
+          <button
+            type="button"
+            class="text-xs text-ink-3 enabled:hover:text-ink disabled:opacity-30"
+            disabled={!Object.keys(stored() ?? {}).length}
+            onClick={resetBranding}
+          >
+            Reset
+          </button>
+
+          <button
+            type="button"
+            class="text-xs font-medium text-accent hover:underline"
+            onClick={() => setExporting(true)}
+          >
+            Export
+          </button>
+        </span>
+      }
+    >
+      <p class="mb-3 text-xs text-ink-3">
+        Checkout and customer accounts share these settings. They belong to this
+        project.
+      </p>
+
+      <For each={groups}>
+        {group => (
+          <fieldset class="mb-3 last:mb-0">
+            <legend class="mb-1.5 text-xs font-medium text-ink-3">
+              {group}
+            </legend>
+
+            <div class="space-y-1.5">
+              <For each={BRANDING_FIELDS.filter(f => f.group === group)}>
+                {f => (
+                  <label class="flex items-center gap-2 text-sm">
+                    <span class="min-w-0 flex-1 truncate">{f.label}</span>
+
+                    <Show when={f.kind === 'color'}>
+                      <input
+                        type="color"
+                        class="size-7 shrink-0 cursor-pointer rounded border border-line bg-transparent p-0.5"
+                        value={values()[f.key]}
+                        onInput={e => setBranding(f.key, e.currentTarget.value)}
+                      />
+                    </Show>
+
+                    <Show when={f.kind === 'number'}>
+                      <input
+                        type="number"
+                        class={`${inputClass} w-[88px]!`}
+                        min={'min' in f ? f.min : undefined}
+                        max={'max' in f ? f.max : undefined}
+                        step={'step' in f ? f.step : undefined}
+                        value={values()[f.key]}
+                        onChange={e =>
+                          setBranding(f.key, e.currentTarget.value || null)
+                        }
+                      />
+                    </Show>
+
+                    <Show when={'options' in f && f.options}>
+                      {options => (
+                        <select
+                          class={`${inputClass} w-[148px]!`}
+                          value={values()[f.key]}
+                          onChange={e =>
+                            setBranding(f.key, e.currentTarget.value)
+                          }
+                        >
+                          <For each={options()}>
+                            {o => (
+                              <option
+                                value={o[0]}
+                                selected={o[0] === values()[f.key]}
+                              >
+                                {o[1]}
+                              </option>
+                            )}
+                          </For>
+                        </select>
+                      )}
+                    </Show>
+                  </label>
+                )}
+              </For>
+            </div>
+          </fieldset>
+        )}
+      </For>
+
+      <ExportDialog
+        open={exporting()}
+        onClose={() => setExporting(false)}
+        branding
+      />
+    </Section>
   )
 }

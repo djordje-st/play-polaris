@@ -5,11 +5,16 @@ import {
   deleteProject,
   duplicateProject,
   editor,
+  notify,
   openProject,
   renameProject,
   sendPage,
+  starterCatalog,
   uniqueProjectName,
 } from '../editor/store'
+import { isExtension } from '../editor/model'
+import { VERSION_LABEL } from '../polaris/catalog'
+import { templatesFor } from '../polaris/library'
 import { Field, TemplatePicker, inputClass } from './dialogs'
 import {
   Button,
@@ -20,6 +25,7 @@ import {
   Popover,
   Segmented,
 } from './ui'
+import type { Catalog } from '../polaris/catalog'
 import type { Version } from '../editor/model'
 import type { Project } from '../editor/store'
 
@@ -242,7 +248,7 @@ function ProjectRow(props: {
 
             <span class="block truncate text-xs text-ink-3">
               {plural(props.project.pages.length, 'page')} ·{' '}
-              {props.project.version} ·{' '}
+              {VERSION_LABEL[props.project.version]} ·{' '}
               {props.active ? 'Open' : edited(props.project.updatedAt)}
             </span>
           </button>
@@ -349,7 +355,9 @@ export function NewProjectDialog(props: {
 function NewProjectForm(props: { onClose: () => void }) {
   const [name, setName] = createSignal(uniqueProjectName('Untitled project'))
   const [version, setVersion] = createSignal<Version>(editor.state.doc.version)
-  const [template, setTemplate] = createSignal('home')
+  const [template, setTemplate] = createSignal(
+    isExtension(version()) ? 'notice' : 'home'
+  )
   const error = () =>
     !name().trim()
       ? 'Give the project a name'
@@ -366,12 +374,29 @@ function NewProjectForm(props: { onClose: () => void }) {
           return
         }
 
-        createProject({
+        const input = {
           name: name().trim(),
           version: version(),
           template: template(),
-        })
-        props.onClose()
+        }
+
+        const create = (c: Catalog) => {
+          createProject(input, c)
+          props.onClose()
+        }
+        // Starters are parsed with the catalog of the surface being created.
+        const c = starterCatalog(input.version)
+
+        if (c instanceof Promise) {
+          void c.then(create, (reason: unknown) =>
+            notify(
+              reason instanceof Error ? reason.message : String(reason),
+              'critical'
+            )
+          )
+        } else {
+          create(c)
+        }
       }}
     >
       <DialogHeader
@@ -397,20 +422,31 @@ function NewProjectForm(props: { onClose: () => void }) {
         </Field>
 
         <div>
-          <p class="mb-1 text-sm font-medium text-ink-2">Polaris version</p>
+          <p class="mb-1 text-sm font-medium text-ink-2">Surface</p>
 
           <Segmented
-            label="Polaris version"
+            label="Surface"
             value={version()}
-            onChange={setVersion}
+            onChange={v => {
+              if (isExtension(v) !== isExtension(version())) {
+                setTemplate(isExtension(v) ? 'notice' : 'home')
+              } else if (!templatesFor(v).some(t => t.id === template())) {
+                setTemplate('blank')
+              }
+
+              setVersion(v)
+            }}
             options={[
-              { value: 'v2', label: 'v2, new admin design' },
-              { value: 'v1', label: 'v1, previous design' },
+              { value: 'v2', label: 'App Home v2' },
+              { value: 'v1', label: 'App Home v1' },
+              { value: 'checkout', label: 'Checkout' },
+              { value: 'customer-account', label: 'Customer accounts' },
             ]}
           />
         </div>
 
         <TemplatePicker
+          version={version()}
           value={template()}
           onChange={setTemplate}
         />
@@ -500,7 +536,7 @@ function SendPageForm(props: { pageId: string; onClose: () => void }) {
                 <span class="block truncate font-medium">{p.name}</span>
 
                 <span class="block text-xs text-ink-3">
-                  {plural(p.pages.length, 'page')} · {p.version}
+                  {plural(p.pages.length, 'page')} · {VERSION_LABEL[p.version]}
                 </span>
               </span>
             </label>

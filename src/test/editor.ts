@@ -1,5 +1,7 @@
 import manifestV1 from 'polaris-types-v1/custom-elements?raw'
 import manifestV2 from 'polaris-types-v2/custom-elements?raw'
+import manifestCheckout from '../polaris/manifests/checkout.json?raw'
+import manifestAccount from '../polaris/manifests/customer-account.json?raw'
 import { buildCatalog } from '../polaris/catalog'
 import { isText, locate, parseHTML } from '../editor/model'
 import { currentPage, editor, initWorkspace, setCatalog } from '../editor/store'
@@ -9,6 +11,11 @@ import type { Version } from '../editor/model'
 export const catalogs: Record<Version, Catalog> = {
   v1: buildCatalog('v1', JSON.parse(manifestV1) as Manifest),
   v2: buildCatalog('v2', JSON.parse(manifestV2) as Manifest),
+  checkout: buildCatalog('checkout', JSON.parse(manifestCheckout) as Manifest),
+  'customer-account': buildCatalog(
+    'customer-account',
+    JSON.parse(manifestAccount) as Manifest
+  ),
 }
 
 const initialState = editor.state

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/solid-router'
 import { CATEGORIES, TEMPLATES } from '../polaris/library'
-import { FAQ, FEATURES, SITE, STEPS } from '../site'
+import { FAQ, FEATURES, SITE, STEPS, SURFACES } from '../site'
 
 export const Route = createFileRoute('/llms.txt')({
   server: {
@@ -23,6 +23,7 @@ ${SITE.name} runs in the browser. It loads Shopify's Polaris web components from
 ## Features
 
 ${FEATURES.map(f => `- ${f.title}: ${f.body}`).join('\n')}
+${SURFACES.map(f => `- ${f.eyebrow}: ${f.body}`).join('\n')}
 
 ## How it works
 

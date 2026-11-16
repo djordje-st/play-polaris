@@ -130,7 +130,8 @@ export function createRenderer(doc: Document) {
   }
 
   return {
-    render(nodes: Array<TreeNode>, c: Catalog) {
+    /** `mount` is where the page renders: the body, or an extension target. */
+    render(nodes: Array<TreeNode>, c: Catalog, mount: Element = doc.body) {
       if (catalog !== c) {
         // Placeholder rules depend on the catalog; force a full pass.
         catalog = c
@@ -140,7 +141,7 @@ export function createRenderer(doc: Document) {
         }
       }
 
-      syncChildren(doc.body, nodes)
+      syncChildren(mount, nodes)
 
       for (const [id, node] of byId) {
         if (!node.isConnected) {

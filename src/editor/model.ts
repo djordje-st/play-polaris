@@ -1,6 +1,17 @@
+import type { Branding } from '../polaris/branding.ts'
 import type { Catalog } from '../polaris/catalog.ts'
 
-export type Version = 'v1' | 'v2'
+// App Home has two Polaris versions. The extension surfaces sit beside them:
+// each one picks its own component catalog and preview.
+export const VERSIONS = ['v1', 'v2', 'checkout', 'customer-account'] as const
+
+export type Version = (typeof VERSIONS)[number]
+
+export const isVersion = (v: unknown): v is Version =>
+  VERSIONS.includes(v as Version)
+
+export const isExtension = (v: Version) =>
+  v === 'checkout' || v === 'customer-account'
 
 // Boolean attributes use true for presence; false is represented by omission.
 export type Attrs = Record<string, string | true>
@@ -16,9 +27,15 @@ export type TextNode = { id: string; tag: '#text'; text: string }
 
 export type TreeNode = ElementNode | TextNode
 
-export type Page = { id: string; name: string; nodes: Array<TreeNode> }
+/** On extension surfaces a page is one extension, rendered at `target`. */
+export type Page = {
+  id: string
+  name: string
+  nodes: Array<TreeNode>
+  target?: string
+}
 
-export type Doc = { version: Version; pages: Array<Page> }
+export type Doc = { version: Version; pages: Array<Page>; branding?: Branding }
 
 export const uid = () => crypto.randomUUID()
 

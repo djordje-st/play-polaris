@@ -4,9 +4,9 @@ import { TOOL_NAMES } from '../editor/webmcp'
 import {
   editor,
   notify,
+  openSurface,
   redo,
   setMode,
-  setVersion,
   setViewport,
   undo,
   canUndo as hasUndo,
@@ -14,6 +14,7 @@ import {
 } from '../editor/store'
 import { createRoom, roomUrl } from '../editor/collaboration'
 import { purgeWorkspace } from '../editor/persistence'
+import { isExtension } from '../editor/model'
 import { modKey, shortcutList } from '../editor/shortcuts'
 import { ExportDialog } from './ExportDialog'
 import { Logo } from './Logo'
@@ -21,6 +22,34 @@ import { ProjectSwitcher } from './Projects'
 import { ThemeMenu } from './ThemeMenu'
 import { startTour } from './tour'
 import { Button, Icon, IconButton, Kbd, Popover, Segmented } from './ui'
+import type { Version } from '../editor/model'
+
+const SURFACES: Array<{ value: Version; label: string; title: string }> = [
+  {
+    value: 'v2',
+    label: 'v2',
+    title:
+      'App Home with Polaris web components 2.x (polaris-2.js), the new admin design',
+  },
+  {
+    value: 'v1',
+    label: 'v1',
+    title:
+      'App Home with Polaris web components 1.x (polaris-1.js), the previous admin design',
+  },
+  {
+    value: 'checkout',
+    label: 'Checkout',
+    title:
+      'Checkout UI extensions, previewed on the checkout and Thank you pages',
+  },
+  {
+    value: 'customer-account',
+    label: 'Accounts',
+    title:
+      'Customer account UI extensions, previewed on the order and profile pages',
+  },
+]
 
 export function Toolbar(props: {
   loadingVersion: boolean
@@ -81,23 +110,24 @@ export function Toolbar(props: {
 
       <div data-tour="version">
         <Segmented
-          label="Polaris version"
+          label="Surface and Polaris version"
           value={version()}
-          onChange={setVersion}
-          options={[
-            {
-              value: 'v2',
-              label: 'v2',
-              title:
-                'Polaris web components 2.x (polaris-2.js), the new admin design',
-            },
-            {
-              value: 'v1',
-              label: 'v1',
-              title:
-                'Polaris web components 1.x (polaris-1.js), the previous admin design',
-            },
-          ]}
+          onChange={v =>
+            void openSurface(v).catch((error: unknown) =>
+              notify(
+                error instanceof Error ? error.message : String(error),
+                'critical'
+              )
+            )
+          }
+          // A shared room is one document, so it can't hop between surfaces.
+          options={SURFACES.filter(o =>
+            room()
+              ? isExtension(version())
+                ? o.value === version()
+                : !isExtension(o.value)
+              : true
+          )}
         />
       </div>
 

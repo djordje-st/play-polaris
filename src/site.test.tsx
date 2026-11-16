@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { RouterProvider, createMemoryHistory } from '@tanstack/solid-router'
 import { mount, button } from './test/dom'
 import { getRouter } from './router'
-import { FAQ, FEATURES, SITE } from './site'
+import { FAQ, FEATURES, SITE, SURFACES } from './site'
 import { CATEGORIES } from './polaris/library'
 import { Route as robots } from './routes/robots[.]txt'
 import { Route as sitemap } from './routes/sitemap[.]xml'
@@ -51,6 +51,13 @@ test('homepage renders content, navigation and canonical production metadata', a
 
   for (const item of FAQ) {
     expect(root.textContent).toContain(item.q)
+  }
+
+  for (const surface of SURFACES) {
+    expect(root.textContent).toContain(surface.title)
+    expect(
+      root.querySelector(`#extensions img[src="${surface.image}"]`)
+    ).toHaveProperty('alt', surface.alt)
   }
 
   expect(root.textContent).toContain(

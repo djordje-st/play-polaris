@@ -281,7 +281,7 @@ test('toolbar controls mode, version, viewport, history, save state and export',
 
   root
     .querySelector<HTMLButtonElement>(
-      '[aria-label="Polaris version"] button:first-child'
+      '[aria-label="Surface and Polaris version"] button:first-child'
     )!
     .click()
   expect(store.editor.state.doc.version).toBe('v2')

@@ -6,7 +6,10 @@ import {
   TYPES_PACKAGE,
   VERSION_LABEL,
 } from '../polaris/catalog'
-import { generate, tokensToString } from '../editor/codegen'
+import { BRANDING_MUTATION, brandingVariables } from '../polaris/branding'
+import { targetOf } from '../polaris/surfaces'
+import { extensionToml, generate, tokensToString } from '../editor/codegen'
+import { isExtension } from '../editor/model'
 import { fileName, slug } from '../editor/names'
 import { currentProject, editor, notify } from '../editor/store'
 import { Button, Dialog, DialogHeader, Icon, Segmented } from './ui'
@@ -50,6 +53,8 @@ export function ExportDialog(props: {
   open: boolean
   onClose: () => void
   pageId?: string
+  /** Open on the branding settings instead of the page's code. */
+  branding?: boolean
 }) {
   return (
     <Dialog
@@ -61,20 +66,35 @@ export function ExportDialog(props: {
       <ExportForm
         onClose={props.onClose}
         pageId={props.pageId}
+        branding={props.branding}
       />
     </Dialog>
   )
 }
 
-function ExportForm(props: { onClose: () => void; pageId?: string }) {
+const plain = (name: string, code: string) => ({
+  name,
+  code,
+  tokens: [{ kind: 'plain' as const, text: code }],
+})
+
+function ExportForm(props: {
+  onClose: () => void
+  pageId?: string
+  branding?: boolean
+}) {
   const doc = useSelector(editor, s => s.doc)
   const catalog = useSelector(editor, s => s.catalog)
   const pageId = props.pageId ?? editor.state.pageId
+  const extension = isExtension(editor.state.doc.version)
   const [active, setActive] = createSignal(0)
   const [options, setOptions] = createStore<
-    ExportOptions & { scope: 'page' | 'all' }
+    Omit<ExportOptions, 'format'> & {
+      format: ExportOptions['format'] | 'branding'
+      scope: 'page' | 'all'
+    }
   >({
-    format: 'html',
+    format: props.branding ? 'branding' : extension ? 'jsx' : 'html',
     scope: 'page',
     document: true,
     appBridge: false,
@@ -84,18 +104,26 @@ function ExportForm(props: { onClose: () => void; pageId?: string }) {
   const files = createMemo(() => {
     const c = catalog()
 
+    if (options.format === 'branding') {
+      return [
+        plain('branding.graphql', BRANDING_MUTATION),
+        plain('branding.variables.json', brandingVariables(doc().branding)),
+      ]
+    }
+
     if (!c) {
       return []
     }
 
+    const format = options.format
     const pages =
       options.scope === 'all'
         ? doc().pages
         : doc().pages.filter(p => p.id === pageId)
     const used = new Map<string, number>()
 
-    return pages.map(p => {
-      let name = fileName(p.name, options)
+    const code = pages.map(p => {
+      let name = fileName(p.name, { ...options, format })
       const n = used.get(name) ?? 0
 
       used.set(name, n + 1)
@@ -104,10 +132,26 @@ function ExportForm(props: { onClose: () => void; pageId?: string }) {
         name = name.replace(/(\.\w+)$/, `-${n + 1}$1`)
       }
 
-      const tokens = generate(p, doc().version, c, options)
+      const tokens = generate(p, doc().version, c, { ...options, format })
 
       return { name, tokens, code: tokensToString(tokens) }
     })
+
+    return extension
+      ? [
+          ...code,
+          plain(
+            'shopify.extension.toml',
+            extensionToml(
+              currentProject()?.name ?? 'Extension',
+              pages.map((p, i) => ({
+                file: code[i]!.name,
+                target: targetOf(p, doc().version),
+              }))
+            )
+          ),
+        ]
+      : code
   })
   const current = () => files()[Math.min(active(), files().length - 1)]
   const version = () => doc().version
@@ -153,7 +197,7 @@ function ExportForm(props: { onClose: () => void; pageId?: string }) {
       `${slug(currentProject()?.name ?? '', 'polaris')}-pages.zip`,
       new Blob([zip.slice()], { type: 'application/zip' })
     )
-    notify(`Downloaded ${list.length} pages`)
+    notify(`Downloaded ${list.length} files`)
   }
 
   return (
@@ -167,8 +211,18 @@ function ExportForm(props: { onClose: () => void; pageId?: string }) {
         title="Export code"
         onClose={props.onClose}
       >
-        Production-ready markup for Polaris web components{' '}
-        {VERSION_LABEL[version()]}.
+        <Show
+          when={extension}
+          fallback={
+            <>
+              Production-ready markup for Polaris web components{' '}
+              {VERSION_LABEL[version()]}.
+            </>
+          }
+        >
+          Preact modules for {VERSION_LABEL[version()].toLowerCase()} UI
+          extensions, and the branding settings as an Admin API mutation.
+        </Show>
       </DialogHeader>
 
       <div class="flex h-[min(560px,70vh)]">
@@ -180,15 +234,25 @@ function ExportForm(props: { onClose: () => void; pageId?: string }) {
               label="Format"
               class="flex w-full [&>button]:flex-1"
               value={options.format}
-              onChange={v => setOptions('format', v)}
-              options={[
-                { value: 'html', label: 'HTML' },
-                { value: 'jsx', label: 'React JSX' },
-              ]}
+              onChange={v => {
+                setOptions('format', v)
+                setActive(0)
+              }}
+              options={
+                extension
+                  ? [
+                      { value: 'jsx', label: 'Extension' },
+                      { value: 'branding', label: 'Branding' },
+                    ]
+                  : [
+                      { value: 'html', label: 'HTML' },
+                      { value: 'jsx', label: 'React JSX' },
+                    ]
+              }
             />
           </div>
 
-          <div>
+          <div hidden={options.format === 'branding'}>
             <p class="mb-1.5 text-sm font-medium text-ink-2">Pages</p>
 
             <Segmented
@@ -228,14 +292,45 @@ function ExportForm(props: { onClose: () => void; pageId?: string }) {
             <Show when={options.format === 'jsx'}>
               <Toggle
                 label="TypeScript (.tsx)"
-                hint={`References ${TYPES_PACKAGE[version()].replace(/@[^@]+$/, '')} for typed props.`}
+                hint={`${extension ? 'Typed by' : 'References'} ${TYPES_PACKAGE[version()].replace(/@[^@]+$/, '')} for typed props.`}
                 checked={options.typescript}
                 onChange={v => setOptions('typescript', v)}
               />
             </Show>
           </div>
 
-          <div class="rounded-lg bg-chrome p-3 text-xs text-ink-2">
+          <Show when={options.format === 'branding'}>
+            <div class="rounded-lg bg-chrome p-3 text-xs text-ink-2">
+              Run with the Admin GraphQL API (2026-10) using the{' '}
+              <code class="font-mono break-all">
+                write_checkout_and_accounts_configurations
+              </code>{' '}
+              scope. Replace the id with one from the{' '}
+              <code class="font-mono break-all">
+                checkoutAndAccountsConfigurations
+              </code>{' '}
+              query. The same settings style checkout and customer accounts.
+            </div>
+          </Show>
+
+          <Show when={extension && options.format === 'jsx'}>
+            <div class="rounded-lg bg-chrome p-3 text-xs text-ink-2">
+              Scaffold with{' '}
+              <code class="font-mono break-all">
+                shopify app generate extension --template{' '}
+                {version() === 'checkout'
+                  ? 'checkout_ui'
+                  : 'customer_account_ui'}
+              </code>
+              , put each module in its <code class="font-mono">src</code> folder
+              and merge the targeting entries.
+            </div>
+          </Show>
+
+          <div
+            class="rounded-lg bg-chrome p-3 text-xs text-ink-2"
+            hidden={extension}
+          >
             <Show
               when={options.format === 'jsx'}
               fallback={
