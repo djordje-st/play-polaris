@@ -1,5 +1,6 @@
 import * as Y from 'yjs'
 import { openDatabase, requested, committed } from './persistence'
+import { roomUrl } from './room'
 import { SharedDocument } from './shared'
 import {
   editor,
@@ -20,24 +21,6 @@ const empty: Snapshot = {
   pageId: '',
   viewport: 'desktop',
   presets: [],
-}
-
-export function roomId() {
-  const id = new URLSearchParams(location.search).get('room')
-
-  if (id && !/^[0-9a-f-]{36}$/.test(id)) {
-    throw new Error('Invalid collaboration link.')
-  }
-
-  return id
-}
-
-export function roomUrl(id: string) {
-  const url = new URL('/builder', location.href)
-
-  url.searchParams.set('room', id)
-
-  return url.href
 }
 
 const openRoomDatabase = (id: string) =>

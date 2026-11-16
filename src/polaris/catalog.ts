@@ -74,6 +74,27 @@ export type Manifest = {
   }>
 }
 
+const KEPT = new Set([
+  'modules',
+  'declarations',
+  'tagName',
+  'name',
+  'attributes',
+  'fieldName',
+  'type',
+  'text',
+  'default',
+  'description',
+  'slots',
+  'events',
+])
+
+/** A manifest's JSON with only the fields in `Manifest`; the build ships this. */
+export const slimManifest = (json: string) =>
+  JSON.stringify(JSON.parse(json), (key, value: unknown) =>
+    KEPT.has(key) || !Number.isNaN(+key) ? value : undefined
+  )
+
 export function splitUnion(text: string) {
   const parts: Array<string> = []
   let depth = 0

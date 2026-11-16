@@ -21,6 +21,7 @@ const collaboration = vi.hoisted(() => ({
 
 vi.mock('../editor/persistence', () => persistence)
 vi.mock('../editor/collaboration', () => collaboration)
+vi.mock('../editor/room', () => collaboration)
 
 let store: typeof Store
 
@@ -318,7 +319,9 @@ test('late WebMCP initialization retries and registers tools', async () => {
 
   try {
     await vi.advanceTimersByTimeAsync(1500)
-    expect(context.registerTool).toHaveBeenCalledTimes(29)
+    await vi.waitFor(() =>
+      expect(context.registerTool).toHaveBeenCalledTimes(29)
+    )
   } finally {
     Reflect.deleteProperty(document, 'modelContext')
   }

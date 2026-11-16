@@ -7,7 +7,7 @@ import {
   VERSION_LABEL,
 } from '../polaris/catalog'
 import { BRANDING_MUTATION, brandingVariables } from '../polaris/branding'
-import { targetOf } from '../polaris/surfaces'
+import { targetOf } from '../polaris/targets'
 import { extensionToml, generate, tokensToString } from '../editor/codegen'
 import { isExtension } from '../editor/model'
 import { fileName, slug } from '../editor/names'

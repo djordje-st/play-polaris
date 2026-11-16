@@ -15,7 +15,7 @@ import {
 import { isExtension } from '../editor/model'
 import { VERSION_LABEL } from '../polaris/catalog'
 import { templatesFor } from '../polaris/library'
-import { Field, TemplatePicker, inputClass } from './dialogs'
+import { DialogFooter, NameField, TemplatePicker } from './dialogs'
 import {
   Button,
   Dialog,
@@ -408,18 +408,11 @@ function NewProjectForm(props: { onClose: () => void }) {
       </DialogHeader>
 
       <div class="space-y-5 px-5 py-4">
-        <Field
-          label="Name"
+        <NameField
+          value={name()}
           error={error()}
-        >
-          <input
-            class={inputClass}
-            autofocus
-            value={name()}
-            aria-invalid={!!error()}
-            onInput={e => setName(e.currentTarget.value)}
-          />
-        </Field>
+          onInput={setName}
+        />
 
         <div>
           <p class="mb-1 text-sm font-medium text-ink-2">Surface</p>
@@ -452,17 +445,11 @@ function NewProjectForm(props: { onClose: () => void }) {
         />
       </div>
 
-      <footer class="flex justify-end gap-2 border-t border-line px-5 py-3">
-        <Button onClick={props.onClose}>Cancel</Button>
-
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!!error()}
-        >
-          Create project
-        </Button>
-      </footer>
+      <DialogFooter
+        submit="Create project"
+        disabled={!!error()}
+        onClose={props.onClose}
+      />
     </form>
   )
 }

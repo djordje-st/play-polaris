@@ -1,6 +1,7 @@
 // @vitest-environment happy-dom
 
 import { describe, expect, test } from 'vitest'
+import manifestV2 from 'polaris-types-v2/custom-elements?raw'
 import { catalogs } from '../test/editor'
 import { parseHTML } from '../editor/model'
 import {
@@ -8,6 +9,7 @@ import {
   displayName,
   hasDefaultSlot,
   parseType,
+  slimManifest,
   splitUnion,
 } from './catalog'
 import {
@@ -41,6 +43,13 @@ test('splits only top-level union separators', () => {
   ).toEqual(['"a|b"', 'Map<string, "x" | "y">', '(A | B)', '`c|d`'])
   expect(splitUnion(' | ')).toEqual([])
   expect(parseType()).toEqual({ kind: 'string', options: [] })
+})
+
+test('the manifest the build ships yields the same catalog at under half the size', () => {
+  const slim = slimManifest(manifestV2)
+
+  expect(slim.length).toBeLessThan(manifestV2.length / 2)
+  expect(buildCatalog('v2', JSON.parse(slim))).toEqual(catalogs.v2)
 })
 
 test('builds references while filtering methods and undocumented slots', () => {

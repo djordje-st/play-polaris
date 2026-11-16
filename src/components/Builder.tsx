@@ -18,7 +18,7 @@ import {
   refreshShared,
   notify,
 } from '../editor/store'
-import { joinRoom, roomId } from '../editor/collaboration'
+import { roomId } from '../editor/room'
 import { loadWorkspace, startSession, takeOver } from '../editor/persistence'
 import { handleShortcut, installClipboard } from '../editor/shortcuts'
 import {
@@ -29,7 +29,6 @@ import {
   onDragStart,
 } from '../editor/dnd'
 import { initTheme } from '../editor/theme'
-import { modelContext, registerWebMCP } from '../editor/webmcp'
 import { Canvas } from './Canvas'
 import { InsertPicker } from './InsertPicker'
 import { Inspector } from './Inspector'
@@ -37,23 +36,43 @@ import { Sidebar } from './Sidebar'
 import { Toolbar } from './Toolbar'
 import { startTourOnFirstVisit } from './tour'
 import { Button, Icon } from './ui'
+import type { joinRoom } from '../editor/collaboration'
+
+type Room = ReturnType<typeof joinRoom>
+
+const hasAgent = () => !!(document.modelContext ?? navigator.modelContext)
 
 export function Builder() {
   onMount(initTheme)
 
   const id = roomId()
-  const room = id ? joinRoom(id) : null
+  let room: Room | undefined
+  let unmounted = false
   const roomState = useSelector(editor, s => s.room)
 
   onCleanup(() => {
+    unmounted = true
     void room?.close()
   })
 
   const ready = useSelector(editor, s => s.ready)
   const docVersion = useSelector(editor, s => s.doc.version)
-  const [workspace] = createResource(() =>
-    room ? room.workspace : loadWorkspace()
-  )
+  const [workspace] = createResource(async () => {
+    if (!id) {
+      return loadWorkspace()
+    }
+
+    // Yjs is only needed in a shared room, so it loads with one.
+    const { joinRoom } = await import('../editor/collaboration')
+
+    if (unmounted) {
+      return null
+    }
+
+    room = joinRoom(id)
+
+    return room.workspace
+  })
 
   const version = () =>
     ready()
@@ -67,7 +86,7 @@ export function Builder() {
   )
 
   createEffect(() => {
-    if (catalog.error || (room && workspace.error)) {
+    if (catalog.error || (id && workspace.error)) {
       return
     }
 
@@ -100,7 +119,7 @@ export function Builder() {
       when={ready()}
       fallback={
         <Show
-          when={room && (workspace.loading || workspace.error)}
+          when={id && (workspace.loading || workspace.error)}
           fallback={
             <Splash
               error={catalog.error?.message}
@@ -141,7 +160,7 @@ export function Builder() {
           room
             ? async () => {
                 try {
-                  await room.close(true)
+                  await room!.close(true)
                   location.assign('/builder')
                 } catch (error) {
                   notify((error as Error).message, 'critical')
@@ -167,18 +186,32 @@ function Workbench(props: {
     addEventListener('keydown', onKey)
 
     const offClipboard = installClipboard()
-    // WebMCP polyfills may attach after load; give them a moment.
-    let offAgent = registerWebMCP()
-    const retry = offAgent
-      ? undefined
-      : setTimeout(
-          () => (offAgent = registerWebMCP()) && setAgentReady(true),
-          1500
-        )
+    let offAgent: (() => void) | null = null
+    let unmounted = false
+    // The agent tools only load once an agent can use them.
+    const registerAgent = () => {
+      if (!hasAgent()) {
+        return false
+      }
 
-    setAgentReady(!!offAgent)
+      import('../editor/webmcp').then(
+        ({ registerWebMCP }) => {
+          if (!unmounted) {
+            offAgent = registerWebMCP()
+            setAgentReady(!!offAgent)
+          }
+        },
+        (e: unknown) => console.warn("WebMCP: the tools didn't load", e)
+      )
+
+      return true
+    }
+    // WebMCP polyfills may attach after load; give them a moment.
+    const retry = registerAgent() ? undefined : setTimeout(registerAgent, 1500)
+
     startTourOnFirstVisit()
     onCleanup(() => {
+      unmounted = true
       removeEventListener('keydown', onKey)
       offClipboard()
       clearTimeout(retry)
@@ -204,7 +237,7 @@ function Workbench(props: {
         >
           <Toolbar
             loadingVersion={props.loadingVersion}
-            agentReady={agentReady() && !!modelContext()}
+            agentReady={agentReady() && hasAgent()}
             onLeaveRoom={props.onLeaveRoom}
           />
 

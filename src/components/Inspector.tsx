@@ -8,7 +8,7 @@ import {
 } from '../polaris/catalog'
 import { docsUrl, entryFor } from '../polaris/library'
 import { BRANDING_FIELDS, resolveBranding } from '../polaris/branding'
-import { TARGETS, targetOf } from '../polaris/surfaces'
+import { TARGETS, targetOf } from '../polaris/targets'
 import {
   RULES,
   attrError,
@@ -46,7 +46,7 @@ import { SavePresetDialog, inputClass } from './dialogs'
 import { Icon, IconButton, Popover } from './ui'
 import type { JSX } from 'solid-js'
 import type { PropSpec } from '../polaris/catalog'
-import type { Surface } from '../polaris/surfaces'
+import type { Surface } from '../polaris/targets'
 import type { Issue } from '../polaris/rules'
 import type { ElementNode } from '../editor/model'
 

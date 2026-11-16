@@ -1,6 +1,5 @@
-import { For, Show, createSignal } from 'solid-js'
+import { For, Show, createEffect, createSignal } from 'solid-js'
 import { useSelector } from '@tanstack/solid-store'
-import { TOOL_NAMES } from '../editor/webmcp'
 import {
   editor,
   notify,
@@ -12,7 +11,7 @@ import {
   canUndo as hasUndo,
   canRedo as hasRedo,
 } from '../editor/store'
-import { createRoom, roomUrl } from '../editor/collaboration'
+import { roomUrl } from '../editor/room'
 import { purgeWorkspace } from '../editor/persistence'
 import { isExtension } from '../editor/model'
 import { modKey, shortcutList } from '../editor/shortcuts'
@@ -23,6 +22,7 @@ import { ThemeMenu } from './ThemeMenu'
 import { startTour } from './tour'
 import { Button, Icon, IconButton, Kbd, Popover, Segmented } from './ui'
 import type { Version } from '../editor/model'
+import type { TOOL_NAMES } from '../editor/webmcp'
 
 const SURFACES: Array<{ value: Version; label: string; title: string }> = [
   {
@@ -389,6 +389,8 @@ function Collaboration(props: { onLeave?: () => Promise<void> }) {
     setBusy(true)
 
     try {
+      const { createRoom } = await import('../editor/collaboration')
+
       location.assign(await createRoom())
     } catch {
       notify(
@@ -499,6 +501,16 @@ function Collaboration(props: { onLeave?: () => Promise<void> }) {
 
 function AgentPanel(props: { ready: boolean }) {
   const log = useSelector(editor, s => s.agentLog)
+  // The tool list lives with the tools, which load for an agent or this panel.
+  const [tools, setTools] = createSignal<typeof TOOL_NAMES>([])
+  const loadTools = () =>
+    void import('../editor/webmcp').then(
+      m => setTools(m.TOOL_NAMES),
+      () => {}
+    )
+
+  createEffect(() => props.ready && loadTools())
+
   const time = (at: number) =>
     new Date(at).toLocaleTimeString([], {
       hour: 'numeric',
@@ -516,6 +528,8 @@ function AgentPanel(props: { ready: boolean }) {
           {...attrs}
           type="button"
           title="AI agents (WebMCP)"
+          onPointerEnter={loadTools}
+          onFocus={loadTools}
           class="relative flex h-8 items-center gap-1.5 rounded-md px-2 text-sm font-medium text-ink-2 hover:bg-hover hover:text-ink"
         >
           <Icon
@@ -546,8 +560,8 @@ function AgentPanel(props: { ready: boolean }) {
               }
             >
               <p class="mt-1 text-ink-2">
-                An agent in this browser can use {TOOL_NAMES.length} tools to
-                read the component catalog, build and validate pages, and export
+                An agent in this browser can use {tools().length} tools to read
+                the component catalog, build and validate pages, and export
                 code. Every change lands in your undo history.
               </p>
             </Show>
@@ -561,7 +575,7 @@ function AgentPanel(props: { ready: boolean }) {
                   <p class="mb-1.5 text-xs font-medium text-ink-3">Tools</p>
 
                   <ul class="flex flex-wrap gap-1">
-                    <For each={TOOL_NAMES}>
+                    <For each={tools()}>
                       {t => (
                         <li
                           class="rounded bg-hover px-1.5 font-mono text-xs leading-5 text-ink-2"

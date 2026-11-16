@@ -60,6 +60,47 @@ export function Field(props: {
 export const inputClass =
   'h-8 w-full rounded-md border border-line-strong bg-panel px-2.5 outline-none transition-colors placeholder:text-ink-3 focus:border-accent focus:shadow-[0_0_0_3px_var(--color-accent-soft)] aria-[invalid=true]:border-danger'
 
+export function NameField(props: {
+  value: string
+  error?: string
+  onInput: (value: string) => void
+}) {
+  return (
+    <Field
+      label="Name"
+      error={props.error}
+    >
+      <input
+        class={inputClass}
+        autofocus
+        value={props.value}
+        aria-invalid={!!props.error}
+        onInput={e => props.onInput(e.currentTarget.value)}
+      />
+    </Field>
+  )
+}
+
+export function DialogFooter(props: {
+  submit: string
+  disabled: boolean
+  onClose: () => void
+}) {
+  return (
+    <footer class="flex justify-end gap-2 border-t border-line px-5 py-3">
+      <Button onClick={props.onClose}>Cancel</Button>
+
+      <Button
+        type="submit"
+        variant="primary"
+        disabled={props.disabled}
+      >
+        {props.submit}
+      </Button>
+    </footer>
+  )
+}
+
 const submitIfValid =
   (error: () => string | undefined, submit: () => void) => (e: SubmitEvent) => {
     e.preventDefault()
@@ -121,18 +162,11 @@ function NewPageForm(props: { onClose: () => void }) {
       </DialogHeader>
 
       <div class="space-y-5 px-5 py-4">
-        <Field
-          label="Name"
+        <NameField
+          value={name()}
           error={error()}
-        >
-          <input
-            class={inputClass}
-            autofocus
-            value={name()}
-            aria-invalid={!!error()}
-            onInput={e => setName(e.currentTarget.value)}
-          />
-        </Field>
+          onInput={setName}
+        />
 
         <TemplatePicker
           version={version}
@@ -141,17 +175,11 @@ function NewPageForm(props: { onClose: () => void }) {
         />
       </div>
 
-      <footer class="flex justify-end gap-2 border-t border-line px-5 py-3">
-        <Button onClick={props.onClose}>Cancel</Button>
-
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!!error()}
-        >
-          Create page
-        </Button>
-      </footer>
+      <DialogFooter
+        submit="Create page"
+        disabled={!!error()}
+        onClose={props.onClose}
+      />
     </form>
   )
 }
@@ -320,17 +348,11 @@ function ImportForm(props: { onClose: () => void }) {
         </fieldset>
       </div>
 
-      <footer class="flex justify-end gap-2 border-t border-line px-5 py-3">
-        <Button onClick={props.onClose}>Cancel</Button>
-
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!!error()}
-        >
-          Import
-        </Button>
-      </footer>
+      <DialogFooter
+        submit="Import"
+        disabled={!!error()}
+        onClose={props.onClose}
+      />
     </form>
   )
 }
@@ -441,18 +463,11 @@ function SavePresetForm(props: { target: SaveTarget; onClose: () => void }) {
           <span class="truncate">{summary}</span>
         </div>
 
-        <Field
-          label="Name"
+        <NameField
+          value={name()}
           error={error()}
-        >
-          <input
-            class={inputClass}
-            autofocus
-            value={name()}
-            aria-invalid={!!error()}
-            onInput={e => setName(e.currentTarget.value)}
-          />
-        </Field>
+          onInput={setName}
+        />
 
         <Field
           label="Description"
@@ -467,17 +482,11 @@ function SavePresetForm(props: { target: SaveTarget; onClose: () => void }) {
         </Field>
       </div>
 
-      <footer class="flex justify-end gap-2 border-t border-line px-5 py-3">
-        <Button onClick={props.onClose}>Cancel</Button>
-
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!!error()}
-        >
-          {editing ? 'Save changes' : 'Save component'}
-        </Button>
-      </footer>
+      <DialogFooter
+        submit={editing ? 'Save changes' : 'Save component'}
+        disabled={!!error()}
+        onClose={props.onClose}
+      />
     </form>
   )
 }

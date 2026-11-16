@@ -17,12 +17,6 @@ export const Route = createFileRoute('/privacy')({
 function Privacy() {
   return (
     <div class="home privacy-page">
-      <a
-        href="#main"
-        class="home-skip"
-      >
-        Skip to content
-      </a>
       <SiteHeader />
 
       <main

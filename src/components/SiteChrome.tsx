@@ -10,53 +10,61 @@ export function SiteHeader() {
   onMount(initTheme)
 
   return (
-    <header class="home-header">
-      <div class="home-container home-header-inner">
-        <Link
-          to="/"
-          class="home-brand"
-        >
-          <Logo />
-          {SITE.name}
-          <span class="home-brand-mark">/</span>
-        </Link>
-        <nav
-          aria-label="Main"
-          class="home-nav"
-        >
+    <>
+      <a
+        href="#main"
+        class="home-skip"
+      >
+        Skip to content
+      </a>
+      <header class="home-header">
+        <div class="home-container home-header-inner">
           <Link
             to="/"
-            hash="faq"
-            activeOptions={{ includeHash: true }}
+            class="home-brand"
           >
-            FAQ
+            <Logo />
+            {SITE.name}
+            <span class="home-brand-mark">/</span>
           </Link>
-        </nav>
-        <div class="home-header-actions">
-          <a
-            href={SITE.repository}
-            class="home-github"
+          <nav
+            aria-label="Main"
+            class="home-nav"
           >
-            GitHub{' '}
-            <Icon
-              name="external"
-              size={13}
-            />
-          </a>
-          <ThemeMenu />
-          <Link
-            to="/builder"
-            class="home-button home-button-primary home-nav-cta"
-          >
-            Open builder{' '}
-            <Icon
-              name="chevronRight"
-              size={15}
-            />
-          </Link>
+            <Link
+              to="/"
+              hash="faq"
+              activeOptions={{ includeHash: true }}
+            >
+              FAQ
+            </Link>
+          </nav>
+          <div class="home-header-actions">
+            <a
+              href={SITE.repository}
+              class="home-github"
+            >
+              GitHub{' '}
+              <Icon
+                name="external"
+                size={13}
+              />
+            </a>
+            <ThemeMenu />
+            <Link
+              to="/builder"
+              class="home-button home-button-primary home-nav-cta"
+            >
+              Open builder{' '}
+              <Icon
+                name="chevronRight"
+                size={15}
+              />
+            </Link>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+    </>
   )
 }
 

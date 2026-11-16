@@ -47,12 +47,6 @@ export function Home() {
       ref={page}
       class="home"
     >
-      <a
-        href="#main"
-        class="home-skip"
-      >
-        Skip to content
-      </a>
       <SiteHeader />
       <main
         id="main"

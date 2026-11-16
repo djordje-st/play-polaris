@@ -6,6 +6,7 @@ import {
   createSignal,
   on,
   onCleanup,
+  untrack,
 } from 'solid-js'
 import { useSelector } from '@tanstack/solid-store'
 import { Draggable } from '@dnd-kit/dom'
@@ -14,8 +15,7 @@ import { POLARIS_SCRIPT, VERSION_LABEL, displayName } from '../polaris/catalog'
 import { isContainer, validate } from '../polaris/rules'
 import { TEMPLATES } from '../polaris/library'
 import { brandingVars } from '../polaris/branding'
-import { ELEMENTS_CSS, installElements } from '../polaris/elements'
-import { SCREEN_CSS, screenHTML, targetOf } from '../polaris/surfaces'
+import { targetOf } from '../polaris/targets'
 import {
   forgivingTarget,
   isHorizontal,
@@ -88,14 +88,23 @@ const OVERLAY_CSS = `
   stroke-linecap: round; stroke-linejoin: round; }
 `
 
+// Only checkout and customer account projects need the stand-in components
+// and mock pages, so they load with the first one.
+const loadMock = async () => ({
+  ...(await import('../polaris/elements')),
+  ...(await import('../polaris/surfaces')),
+})
+
+type Mock = Awaited<ReturnType<typeof loadMock>>
+
 // App Home loads Shopify's runtime. Extension surfaces get a fixed mock of
 // the host page, drawn with the stand-in components.
-const frameDocument = (version: Version) =>
+const frameDocument = (version: Version, mock?: Mock) =>
   `<!doctype html><html lang="en" data-surface="${version}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${
-    isExtension(version)
-      ? `<style>${FRAME_CSS}${ELEMENTS_CSS}${SCREEN_CSS}</style>`
+    mock
+      ? `<style>${FRAME_CSS}${mock.ELEMENTS_CSS}${mock.SCREEN_CSS}</style>`
       : `<script src="${POLARIS_SCRIPT[version]}"></script><style>${FRAME_CSS}</style>`
-  }</head><body class="pg-design">${isExtension(version) ? '<div id="pg-screen"></div>' : ''}</body></html>`
+  }</head><body class="pg-design">${mock ? '<div id="pg-screen"></div>' : ''}</body></html>`
 
 type Box = { left: number; top: number; width: number; height: number }
 
@@ -169,6 +178,19 @@ export function Canvas() {
   const version = useSelector(editor, s => s.doc.version)
   const viewport = useSelector(editor, s => s.viewport)
   const empty = useSelector(editor, s => currentPage(s).nodes.length === 0)
+  // A signal, not a resource: reading a pending resource would suspend the whole editor.
+  const [mock, setMock] = createSignal<Mock>()
+
+  createEffect(() => {
+    if (isExtension(version()) && !untrack(mock)) {
+      loadMock().then(setMock, () =>
+        notify(
+          "The preview didn't load. Check your connection, then reload.",
+          'critical'
+        )
+      )
+    }
+  })
 
   return (
     <div class="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -181,10 +203,16 @@ export function Canvas() {
           style={{ width: VIEWPORT_WIDTH[viewport()] }}
         >
           <Show
-            when={version()}
+            when={(!isExtension(version()) || mock()) && version()}
             keyed
+            fallback={<FrameLoading version={version()} />}
           >
-            {v => <Frame version={v} />}
+            {v => (
+              <Frame
+                version={v}
+                mock={isExtension(v) ? mock() : undefined}
+              />
+            )}
           </Show>
 
           <Show when={empty() && !isExtension(version())}>
@@ -198,7 +226,15 @@ export function Canvas() {
   )
 }
 
-function Frame(props: { version: Version }) {
+function FrameLoading(props: { version: Version }) {
+  return (
+    <div class="absolute inset-0 grid place-items-center bg-[#f1f1f1] text-sm text-ink-3">
+      Loading Polaris {VERSION_LABEL[props.version]}…
+    </div>
+  )
+}
+
+function Frame(props: { version: Version; mock?: Mock }) {
   let iframe!: HTMLIFrameElement
   const [state, setState] = createSignal<'loading' | 'ready' | 'error'>(
     'loading'
@@ -774,7 +810,7 @@ function Frame(props: { version: Version }) {
       return
     }
 
-    c.doc.getElementById('pg-screen')!.innerHTML = screenHTML(t)
+    c.doc.getElementById('pg-screen')!.innerHTML = props.mock!.screenHTML(t)
 
     const el = c.doc.querySelector('.pg-mount')!
 
@@ -808,7 +844,7 @@ function Frame(props: { version: Version }) {
 
       const specs = Object.values(cat.components)
 
-      installElements(
+      props.mock!.installElements(
         c.win as Window & typeof globalThis,
         specs.map(s => s.tag),
         [...new Set(specs.flatMap(s => s.props.map(p => p.name)))]
@@ -951,15 +987,13 @@ function Frame(props: { version: Version }) {
       <iframe
         ref={iframe}
         title={`Preview, Polaris ${VERSION_LABEL[props.version]}`}
-        srcdoc={frameDocument(props.version)}
+        srcdoc={frameDocument(props.version, props.mock)}
         onLoad={onLoad}
         class="block size-full border-0"
       />
 
       <Show when={state() === 'loading'}>
-        <div class="absolute inset-0 grid place-items-center bg-[#f1f1f1] text-sm text-ink-3">
-          Loading Polaris {VERSION_LABEL[props.version]}…
-        </div>
+        <FrameLoading version={props.version} />
       </Show>
 
       <Show when={state() === 'error'}>

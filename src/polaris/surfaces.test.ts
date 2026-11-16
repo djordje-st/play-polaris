@@ -11,7 +11,8 @@ import {
   templatesFor,
 } from './library'
 import { describeSlot, placementError, slotRule, validate } from './rules'
-import { screenHTML, targetOf, targetsOf } from './surfaces'
+import { screenHTML } from './surfaces'
+import { targetOf, targetsOf } from './targets'
 
 const SURFACES = ['checkout', 'customer-account'] as const
 

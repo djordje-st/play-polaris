@@ -18,8 +18,12 @@ afterEach(() => {
   vi.restoreAllMocks()
 })
 
-function readyFrame() {
+async function readyFrame() {
   const root = mount(() => <Canvas />)
+
+  // The stand-in components and mock pages load on demand.
+  await vi.waitFor(() => expect(root.querySelector('iframe')).not.toBeNull())
+
   const iframe = root.querySelector('iframe')!
   const doc = iframe.contentDocument!
   const win = iframe.contentWindow!
@@ -39,8 +43,8 @@ function readyFrame() {
   return { root, iframe, doc, win }
 }
 
-test('canvas draws the mock page, mounts the extension at its target and follows branding', () => {
-  const { root, iframe, doc, win } = readyFrame()
+test('canvas draws the mock page, mounts the extension at its target and follows branding', async () => {
+  const { root, iframe, doc, win } = await readyFrame()
   const target = () => doc.querySelector('.pg-mount')!
 
   expect(iframe.srcdoc).toContain('data-surface="checkout"')
@@ -72,14 +76,14 @@ test('canvas draws the mock page, mounts the extension at its target and follows
   expect(root.textContent).not.toContain('This page is empty')
 })
 
-test('selecting a stand-in overlay reveals it in design mode', () => {
+test('selecting a stand-in overlay reveals it in design mode', async () => {
   store.replacePage(
     store.parse(
       '<s-button commandFor="m">Open</s-button><s-modal id="m" heading="Title">Body</s-modal><s-button interestFor="t">Hint</s-button><s-tooltip id="t">Tip</s-tooltip>'
     ).nodes
   )
 
-  const { doc } = readyFrame()
+  const { doc } = await readyFrame()
   const [, modal, , tooltip] = store.currentPage().nodes
 
   store.select(modal!.id)

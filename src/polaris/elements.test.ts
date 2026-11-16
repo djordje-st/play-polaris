@@ -5,7 +5,8 @@ import '../test/dom'
 import { catalogs } from '../test/editor'
 import { installElements } from './elements'
 import { PALETTE, presetFor } from './library'
-import { screenHTML, targetsOf } from './surfaces'
+import { screenHTML } from './surfaces'
+import { targetsOf } from './targets'
 
 const catalog = catalogs['customer-account']
 const specs = Object.values(catalog.components)
