@@ -102,7 +102,7 @@ export function targetAt(
 
   const sibSlot = inside ? '' : slotOf(loc.node)
   const c = catalog()
-  const max = parent ? slotRule(parent.tag, sibSlot)?.max : undefined
+  const max = parent ? slotRule(parent.tag, sibSlot, c)?.max : undefined
   const full =
     max !== undefined &&
     !!parent &&

@@ -1,7 +1,7 @@
 import { displayName, hasDefaultSlot } from './catalog.ts'
 import { isText, slotOf, walk } from '../editor/model.ts'
 import type { Catalog, PropSpec } from './catalog.ts'
-import type { ElementNode, TreeNode } from '../editor/model.ts'
+import type { ElementNode, TreeNode, Version } from '../editor/model.ts'
 
 // Slot constraints exist only as prose in the manifest, so they are transcribed here.
 
@@ -185,11 +185,54 @@ const list = (tags: Array<string>) => {
 }
 const slotName = (slot: string) => (slot ? `the “${slot}” slot` : 'its content')
 
+const BUTTONS: SlotRule = { accepts: ['s-button'] }
+const ONE_BUTTON: SlotRule = { accepts: ['s-button'], max: 1 }
+const ACCESSORY = { accessory: { accepts: ['s-button', 's-clickable'] } }
+
+// Checkout and customer accounts document these slots differently.
+const EXTENSION_SLOTS: Record<string, Record<string, SlotRule>> = {
+  's-checkbox': { label: { accepts: ['s-text'], max: 1 } },
+  's-consent-phone-field': ACCESSORY,
+  's-email-field': ACCESSORY,
+  's-number-field': ACCESSORY,
+  's-page': {
+    'breadcrumb-actions': ONE_BUTTON,
+    'primary-action': ONE_BUTTON,
+    'secondary-actions': BUTTONS,
+  },
+  's-password-field': ACCESSORY,
+  's-phone-field': ACCESSORY,
+  's-section': { 'primary-action': ONE_BUTTON, 'secondary-actions': BUTTONS },
+  's-text-field': ACCESSORY,
+  's-url-field': ACCESSORY,
+}
+
+/** Slots whose documented contents differ from the shared rules on one surface. */
+const SURFACE_SLOTS: Partial<
+  Record<Version, Record<string, Record<string, SlotRule>>>
+> = {
+  // Tooltips in a section's supplemental slot arrived with 2.0.
+  v1: {
+    's-section': {
+      supplemental: {
+        accepts: ['s-badge', 's-avatar', 's-text', 's-icon', 's-thumbnail'],
+      },
+    },
+  },
+  checkout: EXTENSION_SLOTS,
+  'customer-account': EXTENSION_SLOTS,
+}
+
+/** Pass the catalog to apply what its surface documents for the slot. */
 export function slotRule(
   parentTag: string,
-  slot: string
+  slot: string,
+  catalog?: Catalog
 ): SlotRule | undefined {
-  return RULES[parentTag]?.slots?.[slot]
+  return (
+    (catalog && SURFACE_SLOTS[catalog.version]?.[parentTag]?.[slot]) ??
+    RULES[parentTag]?.slots?.[slot]
+  )
 }
 
 // Rules cover every surface; a slot only lists what this catalog has.
@@ -201,7 +244,7 @@ export function describeSlot(
   slot: string,
   catalog?: Catalog
 ) {
-  const r = slotRule(parentTag, slot)
+  const r = slotRule(parentTag, slot, catalog)
 
   if (!r?.accepts) {
     return 'Any component'
@@ -225,7 +268,9 @@ export function describeSlot(
 }
 
 export function isContainer(catalog: Catalog, tag: string) {
-  return hasDefaultSlot(catalog.components[tag]) && !slotRule(tag, '')?.text
+  return (
+    hasDefaultSlot(catalog.components[tag]) && !slotRule(tag, '', catalog)?.text
+  )
 }
 
 export function placementError(
@@ -268,7 +313,7 @@ export function placementError(
       : `${displayName(parentTag)} can't contain other content`
   }
 
-  const rule = slotRule(parentTag, slot)
+  const rule = slotRule(parentTag, slot, catalog)
 
   if (!rule?.accepts) {
     return null
@@ -421,7 +466,7 @@ export function validate(
     }
 
     for (const [s, kids] of bySlot) {
-      const rule = slotRule(n.tag, s)
+      const rule = slotRule(n.tag, s, catalog)
 
       if (rule?.max && kids.length > rule.max) {
         for (const k of kids.slice(rule.max)) {

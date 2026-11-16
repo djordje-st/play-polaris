@@ -10,7 +10,7 @@ import {
   presetFor,
   templatesFor,
 } from './library'
-import { validate } from './rules'
+import { describeSlot, placementError, slotRule, validate } from './rules'
 import { screenHTML, targetOf, targetsOf } from './surfaces'
 
 const SURFACES = ['checkout', 'customer-account'] as const
@@ -114,4 +114,38 @@ test('docs links and presets follow the surface', () => {
   expect(CATEGORIES.flatMap(c => c.items).map(i => i.tag)).not.toContain(
     's-qr-code'
   )
+})
+
+test('slot rules follow what each surface documents', () => {
+  const account = catalogs['customer-account']
+
+  // Customer account pages go back with a button; App Home uses a link.
+  expect(
+    placementError(account, 's-page', 'breadcrumb-actions', 's-button')
+  ).toBeNull()
+  expect(
+    placementError(account, 's-page', 'breadcrumb-actions', 's-link')
+  ).toContain('only accepts <s-button>')
+  expect(
+    placementError(catalogs.v2, 's-page', 'breadcrumb-actions', 's-link')
+  ).toBeNull()
+  expect(describeSlot('s-page', 'breadcrumb-actions', account)).toBe(
+    '<s-button> (max 1)'
+  )
+
+  expect(
+    placementError(catalogs.checkout, 's-text-field', 'accessory', 's-icon')
+  ).toContain('only accepts <s-button> or <s-clickable>')
+  expect(
+    placementError(catalogs.v2, 's-text-field', 'accessory', 's-icon')
+  ).toBeNull()
+  expect(slotRule('s-checkbox', 'label', catalogs.checkout)?.max).toBe(1)
+  expect(slotRule('s-checkbox', 'label')).toBeUndefined()
+
+  expect(
+    placementError(catalogs.v1, 's-section', 'supplemental', 's-tooltip')
+  ).toContain('only accepts')
+  expect(
+    placementError(catalogs.v2, 's-section', 'supplemental', 's-tooltip')
+  ).toBeNull()
 })

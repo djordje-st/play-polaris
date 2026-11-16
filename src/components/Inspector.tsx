@@ -269,7 +269,8 @@ function ElementSections(props: {
   const takesText = () =>
     !!spec() &&
     !placementError(catalog(), props.node.tag, '', '#text') &&
-    (!!slotRule(props.node.tag, '')?.text || props.node.children.some(isText))
+    (!!slotRule(props.node.tag, '', catalog())?.text ||
+      props.node.children.some(isText))
   const textual = () => props.node.children.every(isText)
 
   const props_ = createMemo(() =>
